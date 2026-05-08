@@ -1,0 +1,81 @@
+SEBI Circular: Cybersecurity and Cyber Resilience Framework for Market Infrastructure Institutions
+Issued by: Securities and Exchange Board of India
+Date: January 3, 2024
+Reference: SEBI/HO/MRD/MRD-PoD-1/P/CIR/2024/2
+
+1. Background
+SEBI had issued circulars on Cyber Security and Cyber Resilience Framework for Stock Exchanges, Clearing Corporations and Depositories. Given the evolving cyber threat landscape and increasing sophistication of attacks, it has been decided to enhance the existing framework.
+
+2. Applicability
+This circular is applicable to:
+- Stock Exchanges
+- Clearing Corporations
+- Depositories
+
+These entities are collectively referred to as Market Infrastructure Institutions (MIIs).
+
+3. Key Requirements
+
+3.1 Governance
+MIIs shall constitute a Cybersecurity Committee at the Board level. The committee shall meet at least once every quarter and shall review the cybersecurity posture of the organization.
+
+3.2 Technology Risk Assessment
+MIIs shall conduct comprehensive Technology Risk Assessments at least once every year. The assessment shall cover all critical systems, applications, and infrastructure components.
+
+3.3 Incident Response
+MIIs shall establish and maintain an Incident Response Plan (IRP). All cybersecurity incidents shall be reported to SEBI within 6 hours of detection. A detailed incident report shall be submitted within 24 hours.
+
+3.4 Third-Party Risk Management
+MIIs shall maintain a comprehensive inventory of all third-party vendors and service providers who have access to their systems and data. Regular security assessments of critical vendors shall be conducted annually.
+
+---
+
+SEBI Circular: Alternative Investment Funds (AIF) — Accredited Investors
+Issued by: Securities and Exchange Board of India
+Date: August 3, 2021
+Reference: SEBI/HO/IMD/IMD-I/DOF6/P/CIR/2021/664
+
+1. Purpose
+In order to encourage development of the AIF industry and to provide greater flexibility to sophisticated investors, SEBI has decided to introduce the concept of "Accredited Investors" for AIFs.
+
+2. Definition of Accredited Investor
+An Accredited Investor shall mean any person who is accredited by an Accreditation Agency and falls under any of the following categories:
+- Individuals, HUFs, family trusts or sole proprietorships: Annual income of at least Rs. 2 crore, or net worth of at least Rs. 7.5 crore (with at least Rs. 3.75 crore in financial assets), or both annual income of Rs. 1 crore and net worth of Rs. 5 crore
+- Partnership firms or body corporates: Net worth of at least Rs. 50 crore
+- Government/Government-related investors: Recognized by SEBI
+
+3. Benefits for Accredited Investors in AIFs
+Accredited investors investing in any scheme of Category I and II AIFs shall be eligible for the following:
+- Minimum investment amount may be reduced to Rs. 25 lakh (from Rs. 1 crore)
+- Manager may charge performance fee based on hurdle rate negotiated with the investor
+- Manager may enter into side letters granting special rights to such investors
+
+4. Accreditation Process
+Accreditation shall be granted by Accreditation Agencies recognized by SEBI. SEBI has recognized the following as Accreditation Agencies:
+- BSE Limited
+- National Stock Exchange of India Limited
+- CDSL
+- NSDL
+The validity of accreditation shall be for 1 year for individuals and 2 years for non-individuals.
+
+---
+
+SEBI Circular: Listing Obligations and Disclosure Requirements — Related Party Transactions
+Issued by: Securities and Exchange Board of India
+Date: November 9, 2021
+Reference: SEBI/HO/CFD/CMD1/CIR/P/2021/662
+
+1. Background
+SEBI had set up a Working Group for reviewing the regulatory framework of Related Party Transactions (RPTs) under LODR Regulations. Based on the recommendations of the Working Group and public consultation, amendments to SEBI (LODR) Regulations, 2015 have been carried out.
+
+2. Revised Definition of Related Party
+The definition of "related party" has been expanded to include persons/entities whose shareholding individually or collectively with PACs is 20% or more in the listed entity (previously 10%).
+
+3. Material Related Party Transactions
+A transaction with a related party shall be considered material if the transaction(s) to be entered into individually or taken together with previous transactions during a financial year, exceeds Rs. 1,000 crore or 10% of the annual consolidated turnover of the listed entity, whichever is lower.
+
+4. Approval Requirements
+All material related party transactions shall require prior approval of shareholders. The resolution shall be passed with approval of majority of the minority shareholders. Related parties shall not vote on such resolutions regardless of whether they are party to the particular transaction.
+
+5. Effective Date
+The revised framework shall be applicable with effect from April 1, 2022.

@@ -1,0 +1,72 @@
+RBI Circular: Digital Lending Guidelines 2022
+Issued by: Reserve Bank of India
+Date: September 2, 2022
+Reference: RBI/2022-23/111
+
+1. Background
+The Reserve Bank of India constituted a Working Group on Digital Lending including Lending through Online Platforms and Mobile Apps (WGDL) to study all aspects of digital lending activities in the regulated and unregulated space with a view to devise an appropriate regulatory approach to address issues while fostering innovation. Based on the recommendations of the WGDL, certain regulatory measures were announced in August 2022.
+
+2. Scope
+These guidelines apply to all commercial banks (including Small Finance Banks, Payments Banks, and Local Area Banks), primary (urban) co-operative banks, state co-operative banks, district central co-operative banks, and non-banking financial companies (including Housing Finance Companies).
+
+3. Key Provisions
+
+3.1 Loan Disbursement and Repayment
+All loan disbursements and repayments shall be executed only between the bank accounts of the borrower and the Regulated Entity (RE), without any pass-through or pool account of the Lending Service Provider (LSP) or any third party.
+
+3.2 Key Fact Statement (KFS)
+A Key Fact Statement (KFS) shall be provided to the borrower before the execution of the contract in a standardized format for all digital lending products. The KFS shall include the Annual Percentage Rate (APR) and the recovery mechanism.
+
+3.3 Automatic Credit Limit Increase
+Automatic increase in credit limit shall not be done without explicit consent of the borrower.
+
+3.4 Data Privacy
+Digital Lending Apps (DLAs) shall only collect data that is necessary for the services provided. The borrower's data shall not be stored other than for basic minimal data. DLAs shall not access mobile phone resources like files, media, contact list, call logs, telephony functions, etc.
+
+4. Grievance Redressal
+Each RE shall ensure that it and the LSPs engaged by it shall have a suitable grievance redressal mechanism. The nodal grievance redressal officer shall deal with complaints from borrowers related to digital lending activities.
+
+5. Compliance
+All existing digital loans shall conform to these guidelines by November 30, 2022.
+
+---
+
+RBI Circular: Prepaid Payment Instruments (PPI) - Interoperability
+Issued by: Reserve Bank of India
+Date: October 11, 2021
+Reference: RBI/2021-22/113
+
+1. Overview
+Prepaid Payment Instruments (PPIs) that can be used only at a group of clearly identified merchant locations or establishments shall be called "Limited Purpose PPIs". Full-KYC PPIs shall be interoperable and issuers shall provide such interoperability through authorized card networks and UPI.
+
+2. KYC Requirements
+Full-KYC PPIs require complete Know Your Customer (KYC) verification. Minimum detail PPIs (previously called semi-closed PPIs) can hold a maximum balance of Rs. 10,000 and can only be loaded from bank accounts of the PPI holder.
+
+3. Cash Withdrawal
+Full-KYC PPIs shall be permitted to allow cash withdrawal at ATMs, Point of Sale (PoS) terminals, and Business Correspondents (BCs), subject to a limit of Rs. 2,000 per transaction, Rs. 10,000 per month.
+
+4. Foreign Currency Transactions
+PPIs can be issued in Indian Rupees only. Cross-border transactions using PPIs are not permitted except for PPIs issued to foreign nationals / non-resident Indians visiting India.
+
+---
+
+RBI Circular: Master Direction on KYC
+Issued by: Reserve Bank of India
+Date: February 25, 2016 (Updated: May 10, 2023)
+Reference: RBI/2015-16/42
+
+1. Introduction
+These Directions shall apply to every Regulated Entity (RE) and shall supersede all earlier instructions/guidelines issued by the Reserve Bank of India on KYC/AML/CFT norms.
+
+2. Customer Due Diligence (CDD)
+REs shall undertake Customer Due Diligence (CDD) measures while:
+- Establishing an account-based relationship
+- Carrying out transactions of Rs. 50,000 or more
+- Transferring funds of Rs. 50,000 or more
+- There is a doubt about the authenticity/veracity of previously obtained customer identification data
+
+3. Aadhaar-based eKYC
+REs are permitted to use Aadhaar-based eKYC for customer identification subject to compliance with UIDAI guidelines and the provisions of the Aadhaar Act, 2016.
+
+4. Beneficial Ownership
+For legal entities, REs shall identify the beneficial owner (BO) who ultimately owns or controls the customer. A BO is a natural person who, whether acting alone or together, or through one or more juridical persons, exercises control through ownership of more than 25% of the capital or profits or voting rights.
