@@ -9,9 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_chroma import Chroma
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from google.api_core.exceptions import ResourceExhausted
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -47,7 +48,7 @@ async def lifespan(app: FastAPI):
         raise EnvironmentError("GEMINI_API_KEY is not set")
 
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004",
+        model="models/gemini-embedding-001",
         google_api_key=GEMINI_API_KEY,
     )
     vectorstore = Chroma(
@@ -58,7 +59,7 @@ async def lifespan(app: FastAPI):
     log.info("Connected to ChromaDB collection '%s'", COLLECTION)
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         google_api_key=GEMINI_API_KEY,
         temperature=0.1,
     )
@@ -140,11 +141,8 @@ async def query(req: QueryRequest):
             parts.append(f"{header}\n{doc.page_content}")
         return "\n\n---\n\n".join(parts)
 
-    from langchain_core.runnables import RunnableLambda
-    from langchain_google_genai import ChatGoogleGenerativeAI
-
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         google_api_key=GEMINI_API_KEY,
         temperature=0.1,
     )
@@ -156,7 +154,11 @@ async def query(req: QueryRequest):
     )
 
     context_str = format_docs(source_docs)
-    answer = chain.invoke({"context": context_str, "question": req.question})
+    try:
+        answer = chain.invoke({"context": context_str, "question": req.question})
+    except ResourceExhausted as e:
+        log.warning("Gemini quota exhausted: %s", e)
+        raise HTTPException(status_code=503, detail="AI quota exhausted. Please try again later.")
 
     sources = [
         SourceChunk(

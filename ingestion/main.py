@@ -1,11 +1,10 @@
 import os
-import glob
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
 from langchain_community.document_loaders import TextLoader, PyMuPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 
@@ -57,7 +56,7 @@ def split_documents(docs: list) -> list:
 
 def build_vectorstore(chunks: list) -> Chroma:
     embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004",
+        model="models/gemini-embedding-001",
         google_api_key=GEMINI_API_KEY,
     )
     log.info("Building ChromaDB collection '%s' at %s", COLLECTION, CHROMA_DIR)
