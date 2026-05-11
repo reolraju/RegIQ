@@ -6,8 +6,8 @@ Ask plain-English questions about RBI and SEBI regulations and get accurate, sou
 
 | Layer | Technology |
 |---|---|
-| LLM | Gemini 2.0 Flash |
-| Embeddings | text-embedding-004 |
+| LLM | Gemini 2.5 Flash |
+| Embeddings | gemini-embedding-001 |
 | Vector DB | ChromaDB |
 | Sparse search | BM25 (Phase 2) |
 | Reranker | cross-encoder/ms-marco-MiniLM (Phase 2) |
@@ -98,8 +98,8 @@ Response:
 
 | Step | What it does |
 |---|---|
-| Ingestion service | Reads sample `.txt` documents, splits them into overlapping chunks of ~1000 characters, embeds each chunk using Gemini `text-embedding-004`, and stores the vectors in ChromaDB. Runs once on startup then exits. |
-| Backend service | FastAPI server with a single `POST /query` route. Takes a plain-English question, retrieves the top 5 most semantically similar chunks from ChromaDB, passes them as context to Gemini 2.0 Flash, and returns the answer with source citations. |
+| Ingestion service | Reads sample `.txt` documents, splits them into overlapping chunks of ~1000 characters, embeds each chunk using Gemini `gemini-embedding-001`, and stores the vectors in ChromaDB. Runs once on startup then exits. |
+| Backend service | FastAPI server with a single `POST /query` route. Takes a plain-English question, retrieves the top 5 most semantically similar chunks from ChromaDB, passes them as context to Gemini 2.5 Flash, and returns the answer with source citations. |
 | Frontend service | Streamlit web UI with a text box, example question buttons, a regulator filter (RBI / SEBI / both), and collapsible source document expanders below each answer. |
 | Docker Compose | Wires all 3 services together. Ingestion runs first and writes to a shared `chroma_data` volume. Backend and frontend start after and stay up. One command: `docker compose up --build`. |
 
