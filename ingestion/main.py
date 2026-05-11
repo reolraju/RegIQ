@@ -1,6 +1,8 @@
 import os
+import re
 import logging
 from pathlib import Path
+from typing import Optional
 from dotenv import load_dotenv
 
 from langchain_community.document_loaders import TextLoader, PyMuPDFLoader
@@ -20,6 +22,16 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
 
+# Matches "Date: Month DD, YYYY" or "Updated: Month DD, YYYY" and bare 4-digit years
+_YEAR_RE = re.compile(r'(?:Date|Updated):[^\n]*?(\d{4})', re.IGNORECASE)
+
+
+def extract_circular_year(text: str) -> Optional[int]:
+    match = _YEAR_RE.search(text[:2000])
+    if match:
+        return int(match.group(1))
+    return None
+
 
 def load_documents(docs_dir: Path) -> list:
     docs = []
@@ -27,19 +39,27 @@ def load_documents(docs_dir: Path) -> list:
         for path in docs_dir.glob(pattern):
             log.info("Loading %s", path)
             loader = loader_cls(str(path))
-            loaded = loader.load()
-            # Attach source metadata
-            for doc in loaded:
+            file_docs = loader.load()
+
+            name_lower = path.name.lower()
+            if "rbi" in name_lower:
+                regulator = "RBI"
+            elif "sebi" in name_lower:
+                regulator = "SEBI"
+            else:
+                regulator = "Unknown"
+
+            # Extract year from combined start of first few pages/sections
+            combined_start = " ".join(d.page_content for d in file_docs[:3])
+            circular_year = extract_circular_year(combined_start)
+
+            for doc in file_docs:
                 doc.metadata.setdefault("source", path.name)
-                # Infer regulator from filename / content
-                name_lower = path.name.lower()
-                if "rbi" in name_lower:
-                    doc.metadata["regulator"] = "RBI"
-                elif "sebi" in name_lower:
-                    doc.metadata["regulator"] = "SEBI"
-                else:
-                    doc.metadata["regulator"] = "Unknown"
-            docs.extend(loaded)
+                doc.metadata["regulator"] = regulator
+                if circular_year:
+                    doc.metadata["circular_year"] = circular_year
+
+            docs.extend(file_docs)
     return docs
 
 

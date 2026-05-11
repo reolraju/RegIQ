@@ -25,10 +25,23 @@ with st.sidebar:
         index=0,
     )
     st.divider()
+    use_date_filter = st.checkbox("Filter by circular year")
+    if use_date_filter:
+        year_range = st.slider(
+            "Year range",
+            min_value=2000,
+            max_value=2026,
+            value=(2015, 2026),
+            step=1,
+        )
+        year_from, year_to = year_range
+    else:
+        year_from, year_to = None, None
+    st.divider()
     st.markdown(
         """
         **About**
-        RegIQ uses Retrieval-Augmented Generation (RAG) to answer questions
+        RegIQ uses hybrid RAG (dense + BM25 + cross-encoder reranking) to answer questions
         about Indian financial regulations. Answers are grounded in actual
         regulatory circulars, not the model's parametric memory.
         """
@@ -64,9 +77,13 @@ if ask_btn:
     if not question.strip():
         st.warning("Please enter a question.")
     else:
-        payload = {"question": question.strip()}
+        payload: dict = {"question": question.strip()}
         if regulator_filter != "All":
             payload["regulator"] = regulator_filter
+        if year_from is not None:
+            payload["year_from"] = year_from
+        if year_to is not None:
+            payload["year_to"] = year_to
 
         with st.spinner("Searching regulatory documents..."):
             try:

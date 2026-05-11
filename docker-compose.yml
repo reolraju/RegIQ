@@ -19,6 +19,7 @@ services:
       - CHROMA_DIR=/chroma_data
       - CHROMA_COLLECTION=regiq
       - TOP_K=5
+      - FUSION_K=20
     volumes:
       - chroma_data:/chroma_data
     ports:
