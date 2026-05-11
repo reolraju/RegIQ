@@ -1,4 +1,6 @@
 import os
+from datetime import date
+
 import requests
 import streamlit as st
 from dotenv import load_dotenv
@@ -24,13 +26,31 @@ with st.sidebar:
         options=["All", "RBI", "SEBI"],
         index=0,
     )
+
+    st.subheader("Date range")
+    use_date_filter = st.checkbox("Filter by issue date", value=False)
+    date_from = st.date_input(
+        "From",
+        value=date(2015, 1, 1),
+        min_value=date(2000, 1, 1),
+        max_value=date.today(),
+        disabled=not use_date_filter,
+    )
+    date_to = st.date_input(
+        "To",
+        value=date.today(),
+        min_value=date(2000, 1, 1),
+        max_value=date.today(),
+        disabled=not use_date_filter,
+    )
+
     st.divider()
     st.markdown(
         """
         **About**
-        RegIQ uses Retrieval-Augmented Generation (RAG) to answer questions
-        about Indian financial regulations. Answers are grounded in actual
-        regulatory circulars, not the model's parametric memory.
+        RegIQ uses hybrid retrieval (dense + BM25 with RRF fusion) and a
+        cross-encoder reranker to ground every answer in actual RBI/SEBI
+        circulars — not the model's parametric memory.
         """
     )
 
@@ -64,16 +84,22 @@ if ask_btn:
     if not question.strip():
         st.warning("Please enter a question.")
     else:
-        payload = {"question": question.strip()}
+        payload: dict = {"question": question.strip()}
         if regulator_filter != "All":
             payload["regulator"] = regulator_filter
+        if use_date_filter:
+            if date_from > date_to:
+                st.error("'From' date must be on or before 'To' date.")
+                st.stop()
+            payload["date_from"] = date_from.isoformat()
+            payload["date_to"] = date_to.isoformat()
 
         with st.spinner("Searching regulatory documents..."):
             try:
                 response = requests.post(
                     f"{BACKEND_URL}/query",
                     json=payload,
-                    timeout=60,
+                    timeout=120,
                 )
                 response.raise_for_status()
                 data = response.json()
@@ -93,5 +119,12 @@ if ask_btn:
         if data.get("sources"):
             st.subheader("Source Documents")
             for i, src in enumerate(data["sources"], 1):
-                with st.expander(f"[{i}] {src['source']} — {src['regulator']}"):
+                title_bits = [src["source"], src.get("regulator", "Unknown")]
+                if src.get("date"):
+                    title_bits.append(src["date"])
+                if src.get("reference"):
+                    title_bits.append(src["reference"])
+                with st.expander(f"[{i}] " + " — ".join(title_bits)):
                     st.text(src["content"])
+        else:
+            st.info("No source documents matched the current filters.")
