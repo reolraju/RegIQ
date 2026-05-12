@@ -11,10 +11,10 @@ from langchain_core.documents import Document
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_chroma import Chroma
 from langchain_community.retrievers import BM25Retriever
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
 from google.api_core.exceptions import ResourceExhausted
 from sentence_transformers import CrossEncoder
+
+from agent import build_agent
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -27,19 +27,6 @@ TOP_K = int(os.getenv("TOP_K", "5"))
 CANDIDATE_K = int(os.getenv("CANDIDATE_K", "20"))
 RRF_K = int(os.getenv("RRF_K", "60"))
 RERANK_MODEL = os.getenv("RERANK_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
-
-RAG_PROMPT = ChatPromptTemplate.from_template("""You are a regulatory compliance expert specializing in Indian financial regulations issued by RBI and SEBI.
-
-Answer the question using ONLY the context provided below. If the answer is not in the context, say "I could not find specific information about this in the available regulatory documents."
-
-For every claim you make, cite the source document (use the "source" field from the context metadata).
-
-Context:
-{context}
-
-Question: {question}
-
-Answer (with citations):""")
 
 
 class RetrievalEngine:
@@ -62,6 +49,10 @@ class RetrievalEngine:
     @staticmethod
     def _doc_matches_filter(doc: Document, flt: dict) -> bool:
         for key, cond in flt.items():
+            if key == "$and":
+                if not all(RetrievalEngine._doc_matches_filter(doc, sub) for sub in cond):
+                    return False
+                continue
             value = doc.metadata.get(key)
             if isinstance(cond, dict):
                 for op, target in cond.items():
@@ -125,11 +116,12 @@ class RetrievalEngine:
 vectorstore: Optional[Chroma] = None
 engine: Optional[RetrievalEngine] = None
 llm: Optional[ChatGoogleGenerativeAI] = None
+agent = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global vectorstore, engine, llm
+    global vectorstore, engine, llm, agent
 
     if not GEMINI_API_KEY:
         raise EnvironmentError("GEMINI_API_KEY is not set")
@@ -155,14 +147,16 @@ async def lifespan(app: FastAPI):
         google_api_key=GEMINI_API_KEY,
         temperature=0.1,
     )
-    log.info("RAG pipeline ready")
+
+    agent = build_agent(engine, llm)
+    log.info("LangGraph agent compiled — RAG pipeline ready")
 
     yield
 
     log.info("Shutting down")
 
 
-app = FastAPI(title="RegIQ API", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="RegIQ API", version="3.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -190,41 +184,29 @@ class SourceChunk(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     sources: list[SourceChunk]
+    intent: str
+    product_type: Optional[str] = None
+    grounded: bool = True
+    guard_notes: Optional[str] = None
 
 
-def _build_filter(req: QueryRequest) -> dict:
-    clauses: list[dict] = []
-    if req.regulator:
-        clauses.append({"regulator": req.regulator.upper()})
-    if req.date_from:
-        clauses.append({"date": {"$gte": req.date_from}})
-    if req.date_to:
-        clauses.append({"date": {"$lte": req.date_to}})
-
-    if not clauses:
-        return {}
-    if len(clauses) == 1:
-        return clauses[0]
-    return {"$and": clauses}
-
-
-def _format_context(docs: list[Document]) -> str:
-    parts = []
+def _to_source_chunks(docs: list[Document]) -> list[SourceChunk]:
+    seen: set[tuple] = set()
+    out: list[SourceChunk] = []
     for doc in docs:
-        src = doc.metadata.get("source", "unknown")
-        reg = doc.metadata.get("regulator", "")
-        date = doc.metadata.get("date", "")
-        ref = doc.metadata.get("reference", "")
-        header_bits = [f"Source: {src}"]
-        if reg:
-            header_bits.append(f"Regulator: {reg}")
-        if date:
-            header_bits.append(f"Date: {date}")
-        if ref:
-            header_bits.append(f"Ref: {ref}")
-        header = "[" + " | ".join(header_bits) + "]"
-        parts.append(f"{header}\n{doc.page_content}")
-    return "\n\n---\n\n".join(parts)
+        meta = doc.metadata or {}
+        key = (meta.get("source", ""), doc.page_content[:200])
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(SourceChunk(
+            content=doc.page_content[:500],
+            source=meta.get("source", "unknown"),
+            regulator=meta.get("regulator", "Unknown"),
+            date=meta.get("date"),
+            reference=meta.get("reference"),
+        ))
+    return out
 
 
 @app.get("/health")
@@ -236,37 +218,31 @@ async def health():
 async def query(req: QueryRequest):
     if not req.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
-    if engine is None or llm is None:
+    if agent is None:
         raise HTTPException(status_code=503, detail="Service still warming up")
 
-    flt = _build_filter(req)
-    source_docs = engine.retrieve(req.question, flt)
+    initial_state = {
+        "question": req.question.strip(),
+        "regulator": req.regulator,
+        "date_from": req.date_from,
+        "date_to": req.date_to,
+    }
 
-    if not source_docs:
-        return QueryResponse(
-            answer="I could not find specific information about this in the available regulatory documents.",
-            sources=[],
-        )
-
-    chain = RAG_PROMPT | llm | StrOutputParser()
     try:
-        answer = chain.invoke({
-            "context": _format_context(source_docs),
-            "question": req.question,
-        })
+        final_state = agent.invoke(initial_state)
     except ResourceExhausted as e:
         log.warning("Gemini quota exhausted: %s", e)
         raise HTTPException(status_code=503, detail="AI quota exhausted. Please try again later.")
 
-    sources = [
-        SourceChunk(
-            content=doc.page_content[:500],
-            source=doc.metadata.get("source", "unknown"),
-            regulator=doc.metadata.get("regulator", "Unknown"),
-            date=doc.metadata.get("date"),
-            reference=doc.metadata.get("reference"),
-        )
-        for doc in source_docs
-    ]
+    answer = final_state.get("final_answer") or final_state.get("draft_answer") or \
+        "I could not find specific information about this in the available regulatory documents."
+    sources = _to_source_chunks(final_state.get("docs", []))
 
-    return QueryResponse(answer=answer, sources=sources)
+    return QueryResponse(
+        answer=answer,
+        sources=sources,
+        intent=final_state.get("intent", "simple_lookup"),
+        product_type=final_state.get("product_type"),
+        grounded=bool(final_state.get("grounded", True)),
+        guard_notes=final_state.get("guard_notes") or None,
+    )

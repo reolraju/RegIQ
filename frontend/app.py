@@ -48,20 +48,28 @@ with st.sidebar:
     st.markdown(
         """
         **About**
-        RegIQ uses hybrid retrieval (dense + BM25 with RRF fusion) and a
-        cross-encoder reranker to ground every answer in actual RBI/SEBI
-        circulars — not the model's parametric memory.
+        RegIQ uses a LangGraph agent on top of hybrid retrieval (dense + BM25
+        with RRF fusion) and a cross-encoder reranker. An intent classifier
+        routes each question to the right path — simple lookup, RBI ↔ SEBI
+        comparison, or compliance checklist — and a hallucination guard
+        verifies every claim against the source circulars before answering.
         """
     )
 
 # Example questions
 example_questions = [
     "What are the KYC requirements for digital lending?",
+    "How do RBI and SEBI differ on outsourcing of financial services?",
+    "Give me a compliance checklist for a digital lending app",
     "What is the minimum investment for accredited investors in AIFs?",
-    "How should cash withdrawals from PPIs be handled?",
-    "What are the RPT disclosure thresholds under SEBI LODR?",
     "What are the cybersecurity reporting timelines for MIIs?",
 ]
+
+INTENT_LABELS = {
+    "simple_lookup": "Simple lookup",
+    "comparison": "RBI ↔ SEBI comparison",
+    "checklist": "Compliance checklist",
+}
 
 st.subheader("Example Questions")
 cols = st.columns(len(example_questions))
@@ -112,6 +120,18 @@ if ask_btn:
             except requests.exceptions.HTTPError as e:
                 st.error(f"Backend error: {e}")
                 st.stop()
+
+        intent = data.get("intent", "simple_lookup")
+        product_type = data.get("product_type")
+        grounded = data.get("grounded", True)
+
+        badge_cols = st.columns([2, 2, 2, 4])
+        badge_cols[0].metric("Route", INTENT_LABELS.get(intent, intent))
+        if product_type:
+            badge_cols[1].metric("Product", product_type)
+        badge_cols[2].metric("Grounded", "Yes" if grounded else "Partial")
+        if data.get("guard_notes"):
+            badge_cols[3].caption(f"Guard: {data['guard_notes']}")
 
         st.subheader("Answer")
         st.markdown(data["answer"])

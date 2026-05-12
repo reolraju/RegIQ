@@ -11,7 +11,7 @@ Ask plain-English questions about RBI and SEBI regulations and get accurate, sou
 | Vector DB | ChromaDB |
 | Sparse search | BM25 (Phase 2) |
 | Reranker | cross-encoder/ms-marco-MiniLM (Phase 2) |
-| Framework | LangChain + LangGraph (Phase 3) |
+| Framework | LangChain + LangGraph |
 | Backend | FastAPI |
 | Frontend | Streamlit |
 | PDF parsing | PyMuPDF (Phase 2) |
@@ -79,6 +79,10 @@ Response:
 ```json
 {
   "answer": "According to RBI Circular RBI/2022-23/111...",
+  "intent": "simple_lookup",
+  "product_type": null,
+  "grounded": true,
+  "guard_notes": "all claims supported",
   "sources": [
     {
       "content": "...excerpt from circular...",
@@ -88,6 +92,9 @@ Response:
   ]
 }
 ```
+
+`intent` is one of `simple_lookup`, `comparison`, or `checklist` — the
+LangGraph agent picks the right path based on the question.
 
 ## Roadmap
 
@@ -118,7 +125,7 @@ Response:
 
 ---
 
-### Phase 3 — LangGraph Agent
+### Phase 3 — LangGraph Agent ✅
 **Goal:** Multi-step reasoning that a simple RAG chain can't do.
 
 | Step | What it does |
