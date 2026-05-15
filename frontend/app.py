@@ -18,6 +18,9 @@ st.set_page_config(
 st.title("📋 RegIQ — Regulatory Intelligence")
 st.caption("Ask plain-English questions about RBI and SEBI regulations. Every answer is traced to source circulars.")
 
+if "history" not in st.session_state:
+    st.session_state.history = []  # rolling per-query metric snapshots
+
 # Sidebar filters
 with st.sidebar:
     st.header("Filters")
@@ -55,6 +58,21 @@ with st.sidebar:
         verifies every claim against the source circulars before answering.
         """
     )
+
+    if st.session_state.history:
+        st.divider()
+        st.subheader("Session totals")
+        sess = st.session_state.history
+        total_cost = sum(h["cost_usd"] for h in sess)
+        total_tokens = sum(h["tokens_input"] + h["tokens_output"] for h in sess)
+        avg_latency = sum(h["total_ms"] for h in sess) / len(sess)
+        st.metric("Queries", len(sess))
+        st.metric("Total cost", f"${total_cost:.4f}")
+        st.metric("Total tokens", f"{total_tokens:,}")
+        st.metric("Avg latency", f"{avg_latency/1000:.2f}s")
+        if st.button("Clear history", use_container_width=True):
+            st.session_state.history = []
+            st.rerun()
 
 # Example questions
 example_questions = [
@@ -132,6 +150,19 @@ if ask_btn:
         badge_cols[2].metric("Grounded", "Yes" if grounded else "Partial")
         if data.get("guard_notes"):
             badge_cols[3].caption(f"Guard: {data['guard_notes']}")
+
+        metrics = data.get("metrics")
+        if metrics:
+            st.session_state.history.append(metrics)
+            st.subheader("Performance")
+            m_cols = st.columns(4)
+            m_cols[0].metric("Latency", f"{metrics['total_ms']/1000:.2f}s")
+            m_cols[1].metric("Retrieval", f"{metrics['retrieval_ms']/1000:.2f}s",
+                             help=f"{metrics['retrieval_calls']} call(s) — dense + BM25 + rerank")
+            m_cols[2].metric("LLM", f"{metrics['llm_ms']/1000:.2f}s",
+                             help=f"{metrics['llm_calls']} call(s) — Gemini 2.5 Flash")
+            m_cols[3].metric("Est. cost", f"${metrics['cost_usd']:.5f}",
+                             help=f"{metrics['tokens_input']:,} in / {metrics['tokens_output']:,} out tokens")
 
         st.subheader("Answer")
         st.markdown(data["answer"])

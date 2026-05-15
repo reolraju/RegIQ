@@ -1,4 +1,5 @@
 import os
+import time
 import logging
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -15,6 +16,7 @@ from google.api_core.exceptions import ResourceExhausted
 from sentence_transformers import CrossEncoder
 
 from agent import build_agent
+from metrics import MetricsTracker, current_metrics
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -106,11 +108,20 @@ class RetrievalEngine:
 
     def retrieve(self, query: str, flt: Optional[dict] = None) -> list[Document]:
         flt = flt or {}
+        t0 = time.perf_counter()
         dense_hits = self._dense_search(query, flt, CANDIDATE_K)
         sparse_hits = self._bm25_search(query, flt, CANDIDATE_K)
         fused = self._rrf_fuse([dense_hits, sparse_hits], CANDIDATE_K)
-        log.info("Retrieved %d dense, %d bm25, %d fused", len(dense_hits), len(sparse_hits), len(fused))
-        return self._rerank(query, fused, TOP_K)
+        result = self._rerank(query, fused, TOP_K)
+        elapsed_ms = (time.perf_counter() - t0) * 1000
+        tracker = current_metrics.get()
+        if tracker is not None:
+            tracker.add_retrieval(elapsed_ms)
+        log.info(
+            "Retrieved %d dense, %d bm25, %d fused (%.1fms)",
+            len(dense_hits), len(sparse_hits), len(fused), elapsed_ms,
+        )
+        return result
 
 
 vectorstore: Optional[Chroma] = None
@@ -156,7 +167,7 @@ async def lifespan(app: FastAPI):
     log.info("Shutting down")
 
 
-app = FastAPI(title="RegIQ API", version="3.0.0", lifespan=lifespan)
+app = FastAPI(title="RegIQ API", version="4.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -181,6 +192,17 @@ class SourceChunk(BaseModel):
     reference: Optional[str] = None
 
 
+class QueryMetrics(BaseModel):
+    total_ms: float
+    retrieval_ms: float
+    llm_ms: float
+    retrieval_calls: int
+    llm_calls: int
+    tokens_input: int
+    tokens_output: int
+    cost_usd: float
+
+
 class QueryResponse(BaseModel):
     answer: str
     sources: list[SourceChunk]
@@ -188,6 +210,7 @@ class QueryResponse(BaseModel):
     product_type: Optional[str] = None
     grounded: bool = True
     guard_notes: Optional[str] = None
+    metrics: Optional[QueryMetrics] = None
 
 
 def _to_source_chunks(docs: list[Document]) -> list[SourceChunk]:
@@ -228,15 +251,28 @@ async def query(req: QueryRequest):
         "date_to": req.date_to,
     }
 
+    tracker = MetricsTracker()
+    token = current_metrics.set(tracker)
     try:
-        final_state = agent.invoke(initial_state)
+        final_state = agent.invoke(
+            initial_state,
+            config={"callbacks": [tracker]},
+        )
     except ResourceExhausted as e:
         log.warning("Gemini quota exhausted: %s", e)
         raise HTTPException(status_code=503, detail="AI quota exhausted. Please try again later.")
+    finally:
+        current_metrics.reset(token)
 
     answer = final_state.get("final_answer") or final_state.get("draft_answer") or \
         "I could not find specific information about this in the available regulatory documents."
     sources = _to_source_chunks(final_state.get("docs", []))
+    snapshot = tracker.snapshot()
+    log.info(
+        "Query done: total=%sms retrieval=%sms llm=%sms tokens=%d/%d cost=$%.6f",
+        snapshot["total_ms"], snapshot["retrieval_ms"], snapshot["llm_ms"],
+        snapshot["tokens_input"], snapshot["tokens_output"], snapshot["cost_usd"],
+    )
 
     return QueryResponse(
         answer=answer,
@@ -245,4 +281,5 @@ async def query(req: QueryRequest):
         product_type=final_state.get("product_type"),
         grounded=bool(final_state.get("grounded", True)),
         guard_notes=final_state.get("guard_notes") or None,
+        metrics=QueryMetrics(**snapshot),
     )

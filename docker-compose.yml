@@ -21,6 +21,11 @@ services:
       - TOP_K=5
       - CANDIDATE_K=20
       - RERANK_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+      # Optional LangSmith tracing — populated only if the user set them in .env
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY:-}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-regiq}
+      - LANGCHAIN_ENDPOINT=${LANGCHAIN_ENDPOINT:-}
     volumes:
       - chroma_data:/chroma_data
       - hf_cache:/root/.cache/huggingface

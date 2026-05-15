@@ -1,0 +1,173 @@
+{
+  "description": "RegIQ golden evaluation set. 20 hand-crafted Q&A pairs covering RBI and SEBI sample circulars. Each item provides the question, a curated ground-truth answer, and the source files expected to ground that answer.",
+  "version": "1.0.0",
+  "questions": [
+    {
+      "id": "rbi-dl-01",
+      "question": "Under the RBI Digital Lending Guidelines 2022, who must loan disbursements and repayments flow between?",
+      "ground_truth": "All loan disbursements and repayments must be executed only between the bank accounts of the borrower and the Regulated Entity (RE), without any pass-through or pool account of the Lending Service Provider (LSP) or any third party.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"],
+      "expected_reference": "RBI/2022-23/111"
+    },
+    {
+      "id": "rbi-dl-02",
+      "question": "What must a Key Fact Statement (KFS) include for digital lending products?",
+      "ground_truth": "The KFS must be provided to the borrower before contract execution in a standardized format and include the Annual Percentage Rate (APR) and the recovery mechanism.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"],
+      "expected_reference": "RBI/2022-23/111"
+    },
+    {
+      "id": "rbi-dl-03",
+      "question": "Can Digital Lending Apps access mobile phone resources like contacts and call logs?",
+      "ground_truth": "No. Digital Lending Apps must only collect data necessary for the services provided and must not access mobile phone resources like files, media, contact list, call logs, or telephony functions.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"]
+    },
+    {
+      "id": "rbi-dl-04",
+      "question": "Is automatic increase of credit limit permitted under the digital lending rules?",
+      "ground_truth": "Automatic increase in credit limit is not permitted without explicit consent of the borrower.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"]
+    },
+    {
+      "id": "rbi-ppi-01",
+      "question": "What is the maximum balance allowed in minimum-detail (semi-closed) PPIs?",
+      "ground_truth": "Minimum detail PPIs (previously called semi-closed PPIs) can hold a maximum balance of Rs. 10,000 and can only be loaded from bank accounts of the PPI holder.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"],
+      "expected_reference": "RBI/2021-22/113"
+    },
+    {
+      "id": "rbi-ppi-02",
+      "question": "What are the cash withdrawal limits for full-KYC PPIs at ATMs and PoS?",
+      "ground_truth": "Full-KYC PPIs can allow cash withdrawal at ATMs, PoS terminals, and Business Correspondents subject to Rs. 2,000 per transaction and Rs. 10,000 per month.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"]
+    },
+    {
+      "id": "rbi-ppi-03",
+      "question": "Can PPIs be used for cross-border transactions?",
+      "ground_truth": "PPIs are issued in Indian Rupees only and cross-border transactions are not permitted, except for PPIs issued to foreign nationals or non-resident Indians visiting India.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"]
+    },
+    {
+      "id": "rbi-kyc-01",
+      "question": "At what transaction amount must Regulated Entities undertake Customer Due Diligence under the RBI Master Direction on KYC?",
+      "ground_truth": "REs must undertake CDD when carrying out transactions of Rs. 50,000 or more, transferring funds of Rs. 50,000 or more, when establishing an account-based relationship, or when there is doubt about the authenticity of previously obtained customer identification data.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"],
+      "expected_reference": "RBI/2015-16/42"
+    },
+    {
+      "id": "rbi-kyc-02",
+      "question": "Who qualifies as a beneficial owner of a legal entity under the RBI KYC Master Direction?",
+      "ground_truth": "A beneficial owner is a natural person who, whether acting alone or together, or through one or more juridical persons, exercises control through ownership of more than 25% of the capital or profits or voting rights of the entity.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"]
+    },
+    {
+      "id": "rbi-kyc-03",
+      "question": "Is Aadhaar-based eKYC permitted under the RBI Master Direction on KYC?",
+      "ground_truth": "Yes. REs are permitted to use Aadhaar-based eKYC for customer identification subject to compliance with UIDAI guidelines and the provisions of the Aadhaar Act, 2016.",
+      "regulator": "RBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["rbi_sample.txt"]
+    },
+    {
+      "id": "sebi-cyber-01",
+      "question": "Within how many hours must cybersecurity incidents be reported to SEBI under the MII Cybersecurity Framework?",
+      "ground_truth": "All cybersecurity incidents must be reported to SEBI within 6 hours of detection, and a detailed incident report must be submitted within 24 hours.",
+      "regulator": "SEBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["sebi_sample.txt"],
+      "expected_reference": "SEBI/HO/MRD/MRD-PoD-1/P/CIR/2024/2"
+    },
+    {
+      "id": "sebi-cyber-02",
+      "question": "How often must Market Infrastructure Institutions conduct Technology Risk Assessments?",
+      "ground_truth": "MIIs must conduct comprehensive Technology Risk Assessments at least once every year, covering all critical systems, applications, and infrastructure components.",
+      "regulator": "SEBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["sebi_sample.txt"]
+    },
+    {
+      "id": "sebi-cyber-03",
+      "question": "What governance body must MIIs constitute for cybersecurity oversight and how often must it meet?",
+      "ground_truth": "MIIs must constitute a Cybersecurity Committee at the Board level which must meet at least once every quarter to review the cybersecurity posture of the organization.",
+      "regulator": "SEBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["sebi_sample.txt"]
+    },
+    {
+      "id": "sebi-aif-01",
+      "question": "What is the minimum investment amount for accredited investors in Category I and II AIFs?",
+      "ground_truth": "For accredited investors in Category I and II AIFs the minimum investment amount may be reduced to Rs. 25 lakh from the standard Rs. 1 crore.",
+      "regulator": "SEBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["sebi_sample.txt"],
+      "expected_reference": "SEBI/HO/IMD/IMD-I/DOF6/P/CIR/2021/664"
+    },
+    {
+      "id": "sebi-aif-02",
+      "question": "What are the income or net-worth thresholds for an individual to qualify as an Accredited Investor with SEBI?",
+      "ground_truth": "An individual qualifies if they have annual income of at least Rs. 2 crore, or net worth of at least Rs. 7.5 crore (with at least Rs. 3.75 crore in financial assets), or both annual income of Rs. 1 crore and net worth of Rs. 5 crore.",
+      "regulator": "SEBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["sebi_sample.txt"]
+    },
+    {
+      "id": "sebi-aif-03",
+      "question": "Who are the SEBI-recognised Accreditation Agencies for accredited investor status?",
+      "ground_truth": "SEBI has recognised BSE Limited, National Stock Exchange of India Limited, CDSL and NSDL as Accreditation Agencies. Accreditation is valid for 1 year for individuals and 2 years for non-individuals.",
+      "regulator": "SEBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["sebi_sample.txt"]
+    },
+    {
+      "id": "sebi-rpt-01",
+      "question": "Under the revised SEBI LODR, when is a transaction with a related party considered material?",
+      "ground_truth": "A related party transaction is material if the transaction(s) entered into during a financial year, individually or cumulatively, exceed Rs. 1,000 crore or 10% of the annual consolidated turnover of the listed entity, whichever is lower.",
+      "regulator": "SEBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["sebi_sample.txt"],
+      "expected_reference": "SEBI/HO/CFD/CMD1/CIR/P/2021/662"
+    },
+    {
+      "id": "sebi-rpt-02",
+      "question": "What shareholding threshold now triggers related-party classification under the revised SEBI LODR?",
+      "ground_truth": "The threshold has been expanded to 20% or more shareholding (individually or collectively with persons acting in concert) in the listed entity, raised from the previous 10%.",
+      "regulator": "SEBI",
+      "intent": "simple_lookup",
+      "expected_sources": ["sebi_sample.txt"]
+    },
+    {
+      "id": "checklist-dl-01",
+      "question": "Give me a compliance checklist for a digital lending app.",
+      "ground_truth": "A digital lending app must comply with the RBI Digital Lending Guidelines 2022: route all disbursements and repayments directly between the borrower's bank account and the RE without LSP pass-through; provide a Key Fact Statement with APR and recovery mechanism before contract execution; obtain explicit consent before any credit-limit increase; restrict data collection to what is necessary and avoid accessing phone resources like contacts and call logs; appoint a nodal grievance redressal officer; and ensure KYC compliance under the RBI Master Direction on KYC including Customer Due Diligence at Rs. 50,000 transactions and beneficial-owner identification at 25%.",
+      "regulator": "RBI",
+      "intent": "checklist",
+      "expected_sources": ["rbi_sample.txt"]
+    },
+    {
+      "id": "comparison-cyber-01",
+      "question": "How do RBI and SEBI differ on cybersecurity and incident reporting expectations for the entities they regulate?",
+      "ground_truth": "SEBI imposes explicit cybersecurity governance and reporting obligations on Market Infrastructure Institutions: a board-level Cybersecurity Committee meeting quarterly, annual Technology Risk Assessments, incident reporting within 6 hours and detailed report within 24 hours, and annual vendor assessments. The RBI sample circulars do not lay out comparable incident-reporting timelines but emphasise data minimisation and grievance redressal in digital lending (no unnecessary data collection, no access to phone resources, nodal grievance officer). The frameworks therefore overlap on the principle that regulated entities are responsible for their data and systems but differ sharply on specific timelines and committee structures.",
+      "regulator": null,
+      "intent": "comparison",
+      "expected_sources": ["rbi_sample.txt", "sebi_sample.txt"]
+    }
+  ]
+}
