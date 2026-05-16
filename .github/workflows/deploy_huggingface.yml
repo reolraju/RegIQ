@@ -1,0 +1,65 @@
+name: Deploy to HuggingFace Spaces
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_SPACE: ${{ secrets.HF_SPACE }}
+    steps:
+      - name: Skip when HuggingFace secrets are missing
+        id: precheck
+        run: |
+          if [ -z "${HF_TOKEN}" ] || [ -z "${HF_SPACE}" ]; then
+            echo "::warning::HF_TOKEN / HF_SPACE not set; skipping Spaces deploy"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.precheck.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Stage Spaces-ready tree
+        if: steps.precheck.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/regiq-space"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+
+          # Copy what the Space container needs.
+          cp -r backend frontend ingestion huggingface "$STAGE/"
+
+          # Spaces reads the YAML front-matter from README.md at the repo root.
+          cp huggingface/README.md "$STAGE/README.md"
+
+          # Spaces auto-detects a Dockerfile at the repo root. The COPY paths in
+          # huggingface/Dockerfile are written relative to the repo root, so a
+          # plain `mv` does the trick — no path rewriting required.
+          mv "$STAGE/huggingface/Dockerfile" "$STAGE/Dockerfile"
+
+      - name: Push to HuggingFace Space
+        if: steps.precheck.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/regiq-space"
+          cd "$STAGE"
+          git init -q
+          git checkout -q -b main
+          git config user.email "bot@regiq"
+          git config user.name "RegIQ Bot"
+          git add .
+          git commit -q -m "Deploy ${GITHUB_SHA::7} from main"
+          git remote add space "https://huggingface_bot:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}"
+          git push -f space main

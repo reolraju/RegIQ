@@ -11,7 +11,7 @@ Ask plain-English questions about RBI and SEBI regulations and get accurate, sou
 | Vector DB | ChromaDB |
 | Sparse search | BM25 (Phase 2) |
 | Reranker | cross-encoder/ms-marco-MiniLM (Phase 2) |
-| Framework | LangChain + LangGraph (Phase 3) |
+| Framework | LangChain + LangGraph |
 | Backend | FastAPI |
 | Frontend | Streamlit |
 | PDF parsing | PyMuPDF (Phase 2) |
@@ -52,15 +52,31 @@ RegIQ/
 │   ├── main.py
 │   ├── requirements.txt
 │   ├── Dockerfile
-│   └── sample_docs/    # Sample RBI + SEBI circulars (text)
-├── backend/            # FastAPI — POST /query → RAG → Gemini → answer + sources
+│   └── sample_docs/    # Sample RBI + SEBI circulars (text + PDFs)
+├── backend/            # FastAPI — POST /query → LangGraph agent → answer + sources
 │   ├── main.py
+│   ├── agent.py
+│   ├── metrics.py      # per-request token / cost / latency tracker
 │   ├── requirements.txt
 │   └── Dockerfile
-├── frontend/           # Streamlit UI
+├── frontend/           # Streamlit UI with cost & latency dashboard
 │   ├── app.py
 │   ├── requirements.txt
 │   └── Dockerfile
+├── evaluation/         # Golden dataset + RAGAs scoring (Phase 4)
+│   ├── golden_dataset.json
+│   ├── evaluate.py
+│   ├── Dockerfile
+│   └── README.md
+├── huggingface/        # Single-container HF Spaces deployment (Phase 4)
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── start.sh
+│   └── README.md
+├── scripts/            # Weekly circular sync (Phase 4)
+│   ├── fetch_circulars.py
+│   └── requirements.txt
+├── .github/workflows/  # Weekly sync, RAGAs CI, HF Spaces deploy
 └── docker-compose.yml
 ```
 
@@ -71,7 +87,9 @@ RegIQ/
 ```json
 {
   "question": "What are the KYC requirements for digital lending?",
-  "regulator": "RBI"   // optional: "RBI" | "SEBI" | omit for both
+  "regulator": "RBI",        // optional: "RBI" | "SEBI" | omit for both
+  "date_from": "2020-01-01", // optional
+  "date_to":   "2024-12-31"  // optional
 }
 ```
 
@@ -79,15 +97,35 @@ Response:
 ```json
 {
   "answer": "According to RBI Circular RBI/2022-23/111...",
+  "intent": "simple_lookup",
+  "product_type": null,
+  "grounded": true,
+  "guard_notes": "all claims supported",
   "sources": [
     {
       "content": "...excerpt from circular...",
       "source": "rbi_sample.txt",
-      "regulator": "RBI"
+      "regulator": "RBI",
+      "date": "2022-09-02",
+      "reference": "RBI/2022-23/111"
     }
-  ]
+  ],
+  "metrics": {
+    "total_ms": 4231.5,
+    "retrieval_ms": 612.3,
+    "llm_ms": 3504.8,
+    "retrieval_calls": 1,
+    "llm_calls": 3,
+    "tokens_input": 4821,
+    "tokens_output": 312,
+    "cost_usd": 0.002227
+  }
 }
 ```
+
+`intent` is one of `simple_lookup`, `comparison`, or `checklist` — the
+LangGraph agent picks the right path based on the question. `metrics` is
+returned on every response and powers the Streamlit cost & latency dashboard.
 
 ## Roadmap
 
@@ -118,7 +156,7 @@ Response:
 
 ---
 
-### Phase 3 — LangGraph Agent
+### Phase 3 — LangGraph Agent ✅
 **Goal:** Multi-step reasoning that a simple RAG chain can't do.
 
 | Step | What it does |
@@ -131,12 +169,41 @@ Response:
 
 ---
 
-### Phase 4 — Evaluation + Production Polish
+### Phase 4 — Evaluation + Production Polish ✅
 **Goal:** A live URL and measurable proof the system works.
 
 | Step | What it does |
 |---|---|
-| Golden dataset + RAGAs | Build 20 hand-crafted question/answer pairs covering both regulators. Run the RAGAs evaluation framework which scores the system on faithfulness, answer relevancy, context precision, and context recall. |
-| Cost + latency dashboard | Add a metrics panel to the Streamlit UI showing per-query latency, estimated token cost, and retrieval time. Helps identify slow or expensive queries. |
-| GitHub Actions weekly pipeline | A scheduled workflow that runs every week, checks for new circulars on the RBI and SEBI websites, downloads them, runs the ingestion pipeline, and updates the ChromaDB index automatically. |
-| HuggingFace Spaces deploy | Package the app for HuggingFace Spaces (which supports Docker). Push the repo, configure secrets, and get a public URL. Record a demo video and write the final README. |
+| Golden dataset + RAGAs | 20 hand-crafted Q&A pairs in [`evaluation/golden_dataset.json`](evaluation/golden_dataset.json) covering both regulators and all three agent intents. [`evaluation/evaluate.py`](evaluation/evaluate.py) hits the live backend and scores answers on faithfulness, answer relevancy, context precision, and context recall using RAGAs with Gemini 2.5 Flash as the judge. |
+| Cost + latency dashboard | Every `/query` response now carries a `metrics` object (per-stage timings, token counts, USD cost estimate). The Streamlit UI surfaces these as a Performance panel per query plus a Session-totals widget in the sidebar. |
+| GitHub Actions weekly pipeline | [`.github/workflows/weekly_ingestion.yml`](.github/workflows/weekly_ingestion.yml) runs every Monday, calls [`scripts/fetch_circulars.py`](scripts/fetch_circulars.py) to discover new RBI/SEBI PDFs, stages them under `ingestion/sample_docs/`, and opens a PR. Merging the PR triggers re-ingestion on the next deploy. |
+| HuggingFace Spaces deploy | [`huggingface/`](huggingface) packages the three services into a single Spaces-compatible container (ingestion → backend → Streamlit on `:7860`). [`.github/workflows/deploy_huggingface.yml`](.github/workflows/deploy_huggingface.yml) pushes the staged tree to a Space on every `main` push, given `HF_TOKEN` and `HF_SPACE` secrets. |
+| LangSmith tracing | Setting `LANGCHAIN_TRACING_V2=true` plus an API key (see `.env.example`) captures every LangGraph node, retrieval, and LLM call in LangSmith for debugging. |
+| RAGAs CI | [`.github/workflows/evaluation.yml`](.github/workflows/evaluation.yml) re-runs the golden dataset on every PR that touches the backend or evaluation code and posts the aggregate scores as a PR comment. |
+
+## Evaluation
+
+```bash
+# from the repo root, with `docker compose up -d` running
+cd evaluation
+pip install -r requirements.txt
+GEMINI_API_KEY=... BACKEND_URL=http://localhost:8000 python evaluate.py
+```
+
+Outputs land in `evaluation/results/`:
+- `eval_summary.json` — aggregate RAGAs scores.
+- `eval_per_question.csv` — per-question scores plus the backend's own
+  latency / cost numbers, so you can see at a glance which questions are
+  slow, expensive, or weakly grounded.
+
+See [`evaluation/README.md`](evaluation/README.md) for details.
+
+## Deploying to HuggingFace Spaces
+
+1. Create a new **Docker** Space at huggingface.co.
+2. Set `GEMINI_API_KEY` under **Settings → Repository secrets**.
+3. Either:
+   - point the Space at this repo, copying `huggingface/Dockerfile` and `huggingface/README.md` to the root, or
+   - configure `HF_TOKEN` + `HF_SPACE` secrets on this GitHub repo and let the [`deploy_huggingface`](.github/workflows/deploy_huggingface.yml) workflow stage and push for you on every `main` push.
+
+The container persists ChromaDB and the cross-encoder cache to `/data` so warm restarts skip ingestion and the model download.

@@ -1,9 +1,12 @@
 import os
+import re
 import logging
+from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
-from langchain_community.document_loaders import TextLoader, PyMuPDFLoader
+from langchain_core.documents import Document
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
@@ -20,30 +23,87 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
 
+DATE_PATTERN = re.compile(
+    r"Date:\s*([A-Z][a-z]+\s+\d{1,2},\s+\d{4})",
+    re.IGNORECASE,
+)
+REFERENCE_PATTERN = re.compile(r"Reference:\s*([A-Za-z0-9/\-\.]+)")
+CIRCULAR_SEPARATOR = re.compile(r"\n-{3,}\n")
 
-def load_documents(docs_dir: Path) -> list:
+
+def _parse_date(text: str) -> str | None:
+    """Find the first 'Date: Month DD, YYYY' in text and return ISO YYYY-MM-DD."""
+    m = DATE_PATTERN.search(text)
+    if not m:
+        return None
+    try:
+        dt = datetime.strptime(m.group(1), "%B %d, %Y")
+        return dt.strftime("%Y-%m-%d")
+    except ValueError:
+        return None
+
+
+def _parse_reference(text: str) -> str | None:
+    m = REFERENCE_PATTERN.search(text)
+    return m.group(1) if m else None
+
+
+def _infer_regulator(name: str, text: str) -> str:
+    name_lower = name.lower()
+    text_head = text[:500].lower()
+    if "rbi" in name_lower or "reserve bank" in text_head:
+        return "RBI"
+    if "sebi" in name_lower or "securities and exchange board" in text_head:
+        return "SEBI"
+    return "Unknown"
+
+
+def _build_metadata(source: str, text: str) -> dict:
+    meta = {"source": source, "regulator": _infer_regulator(source, text)}
+    date_iso = _parse_date(text)
+    if date_iso:
+        meta["date"] = date_iso
+    ref = _parse_reference(text)
+    if ref:
+        meta["reference"] = ref
+    return meta
+
+
+def _load_text_file(path: Path) -> list[Document]:
+    """Read a .txt file and split it at '---' separators so each circular
+    becomes its own Document with its own date / reference metadata."""
+    raw = path.read_text(encoding="utf-8", errors="ignore")
+    segments = [s.strip() for s in CIRCULAR_SEPARATOR.split(raw) if s.strip()]
     docs = []
-    for pattern, loader_cls in [("**/*.txt", TextLoader), ("**/*.pdf", PyMuPDFLoader)]:
-        for path in docs_dir.glob(pattern):
-            log.info("Loading %s", path)
-            loader = loader_cls(str(path))
-            loaded = loader.load()
-            # Attach source metadata
-            for doc in loaded:
-                doc.metadata.setdefault("source", path.name)
-                # Infer regulator from filename / content
-                name_lower = path.name.lower()
-                if "rbi" in name_lower:
-                    doc.metadata["regulator"] = "RBI"
-                elif "sebi" in name_lower:
-                    doc.metadata["regulator"] = "SEBI"
-                else:
-                    doc.metadata["regulator"] = "Unknown"
-            docs.extend(loaded)
+    for seg in segments:
+        docs.append(Document(page_content=seg, metadata=_build_metadata(path.name, seg)))
     return docs
 
 
-def split_documents(docs: list) -> list:
+def _load_pdf_file(path: Path) -> list[Document]:
+    """Load a PDF with PyMuPDF. Pages from the same PDF inherit a single
+    document-level date if one can be found anywhere in the file."""
+    loaded = PyMuPDFLoader(str(path)).load()
+    full_text = "\n".join(p.page_content for p in loaded)
+    base_meta = _build_metadata(path.name, full_text)
+    for doc in loaded:
+        # PyMuPDFLoader sets its own metadata (page, source path); overlay ours.
+        doc.metadata.update(base_meta)
+    return loaded
+
+
+def load_documents(docs_dir: Path) -> list[Document]:
+    docs: list[Document] = []
+    for path in sorted(docs_dir.glob("**/*.txt")):
+        log.info("Loading text: %s", path)
+        docs.extend(_load_text_file(path))
+    for path in sorted(docs_dir.glob("**/*.pdf")):
+        log.info("Loading PDF: %s", path)
+        docs.extend(_load_pdf_file(path))
+    return docs
+
+
+def split_documents(docs: list[Document]) -> list[Document]:
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
@@ -54,7 +114,7 @@ def split_documents(docs: list) -> list:
     return chunks
 
 
-def build_vectorstore(chunks: list) -> Chroma:
+def build_vectorstore(chunks: list[Document]) -> Chroma:
     embeddings = GoogleGenerativeAIEmbeddings(
         model="models/gemini-embedding-001",
         google_api_key=GEMINI_API_KEY,

@@ -35,3 +35,6 @@ Thumbs.db
 
 # Notebooks
 .ipynb_checkpoints/
+
+# Evaluation outputs (kept locally / uploaded as CI artifacts)
+evaluation/results/
