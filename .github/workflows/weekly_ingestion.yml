@@ -1,18 +1,18 @@
-name: Weekly Circular Sync
+name: Daily Circular Sync
 
 on:
   schedule:
-    - cron: "0 6 * * 1"   # every Monday at 06:00 UTC
+    # Runs Mon–Fri at 07:00 UTC (after Indian market pre-open, before open)
+    - cron: "0 7 * * 1-5"
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Discover only, don't commit"
+        description: "Discover links only — do not download or commit"
         required: false
         default: "false"
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   fetch:
@@ -30,7 +30,6 @@ jobs:
         run: pip install -r scripts/requirements.txt
 
       - name: Fetch new circulars
-        id: fetch
         run: |
           set -e
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
@@ -48,23 +47,12 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Open PR with new circulars
+      - name: Commit and push new circulars
         if: steps.changes.outputs.changed == 'true' && github.event.inputs.dry_run != 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          commit-message: "chore: weekly circular sync"
-          branch: bot/weekly-circulars
-          delete-branch: true
-          title: "chore: weekly circular sync"
-          body: |
-            Automated update from the weekly circular sync workflow.
-
-            New regulatory PDFs were discovered on the RBI / SEBI websites and
-            staged under `ingestion/sample_docs/`. Merging this PR triggers a
-            re-ingestion on the next deploy so the ChromaDB index picks up the
-            new content.
-
-            Please skim the included filenames before merging.
-          add-paths: |
-            ingestion/sample_docs/**
-            scripts/fetched_manifest.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ingestion/sample_docs scripts/fetched_manifest.json
+          COUNT=$(git diff --cached --name-only | grep -c 'sample_docs' || true)
+          git commit -m "chore: daily circular sync — ${COUNT} new file(s) [skip ci]"
+          git push origin main
