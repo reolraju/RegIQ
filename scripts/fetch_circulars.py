@@ -45,7 +45,7 @@ SOURCES: list[dict] = [
     {
         "name": "RBI Notifications",
         "regulator": "RBI",
-        "rss_url": "https://www.rbi.org.in/rss.xml",
+        "rss_url": "https://rbi.org.in/notifications_rss.xml",
         "index_url": "https://www.rbi.org.in/Scripts/BS_CircularIndexDisplay.aspx",
         "link_selector": "a[href$='.pdf'], a[href$='.PDF']",
         "base_url": "https://www.rbi.org.in",
