@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>RegIQ — Regulatory Intelligence</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/assets/logo-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/colors_and_type.css">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+
+  <!-- Marked for markdown rendering of answer bodies -->
+  <script src="https://unpkg.com/marked@14.1.3/marked.min.js"></script>
+
+  <!-- Components -->
+  <script type="text/babel" src="/static/Primitives.jsx"></script>
+  <script type="text/babel" src="/static/Topbar.jsx"></script>
+  <script type="text/babel" src="/static/Sidebar.jsx"></script>
+  <script type="text/babel" src="/static/Composer.jsx"></script>
+  <script type="text/babel" src="/static/EmptyState.jsx"></script>
+  <script type="text/babel" src="/static/SourcePanel.jsx"></script>
+  <script type="text/babel" src="/static/AnswerCard.jsx"></script>
+  <script type="text/babel" src="/static/App.jsx"></script>
+
+  <script type="text/babel">
+    const { App } = window;
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
