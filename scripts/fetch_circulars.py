@@ -1,7 +1,8 @@
 """Fetch the latest RBI and SEBI circulars and stage them for ingestion.
 
 Strategy (in priority order):
-  1. Parse official RSS feeds — stable, low-bandwidth, officially maintained.
+  1. Parse official RSS / Atom feeds with the stdlib XML parser
+     (stable, no compiled deps, officially maintained by the regulators).
   2. Fall back to scraping the HTML listing page if the RSS yields nothing.
 
 Retention policy: keeps the MAX_KEPT_PER_REGULATOR most recent circulars per
@@ -22,7 +23,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin
 
-import feedparser
+import xml.etree.ElementTree as ET
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -149,27 +151,50 @@ def _extract_pdf_from_page(session: requests.Session, page_url: str, base_url: s
     return None
 
 
+def _parse_rss_links(xml_bytes: bytes) -> list[str]:
+    """Return the list of <link> URLs from an RSS or Atom feed."""
+    try:
+        root = ET.fromstring(xml_bytes)
+    except ET.ParseError as e:
+        log.warning("RSS XML parse error: %s", e)
+        return []
+
+    links: list[str] = []
+    for elem in root.iter():
+        tag = elem.tag.rsplit("}", 1)[-1]  # strip XML namespace
+        if tag not in ("item", "entry"):
+            continue
+        for child in elem:
+            child_tag = child.tag.rsplit("}", 1)[-1]
+            if child_tag != "link":
+                continue
+            # RSS: <link>URL</link>; Atom: <link href="URL"/>
+            href = (child.get("href") or (child.text or "")).strip()
+            if href:
+                links.append(href)
+                break
+    return links
+
+
 def _discover_via_rss(session: requests.Session, source: dict) -> list[str]:
     rss_url = source.get("rss_url", "")
     if not rss_url:
         return []
 
     log.info("%s: fetching RSS %s", source["name"], rss_url)
-    try:
-        feed = feedparser.parse(rss_url, agent=USER_AGENT)
-    except Exception as e:
-        log.warning("%s: RSS parse error: %s", source["name"], e)
+    resp = _http_get(session, rss_url)
+    if resp is None:
         return []
+
+    rss_links = _parse_rss_links(resp.content)
+    log.info("%s: RSS feed has %d item(s)", source["name"], len(rss_links))
 
     base_url = source.get("base_url", "")
     pdf_urls: list[str] = []
 
-    for entry in feed.entries:
+    for link in rss_links:
         if len(pdf_urls) >= MAX_PER_RUN:
             break
-        link = entry.get("link", "")
-        if not link:
-            continue
         if _is_pdf_url(link):
             pdf_urls.append(link)
         else:
@@ -180,7 +205,7 @@ def _discover_via_rss(session: requests.Session, source: dict) -> list[str]:
 
     seen: set[str] = set()
     result = [u for u in pdf_urls if not (u in seen or seen.add(u))]  # type: ignore[func-returns-value]
-    log.info("%s: RSS found %d PDF link(s)", source["name"], len(result))
+    log.info("%s: RSS resolved %d PDF link(s)", source["name"], len(result))
     return result
 
 
