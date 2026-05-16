@@ -95,6 +95,7 @@ function App() {
         guardNotes: data.guard_notes || null,
         html: markdownToHtml(data.answer || ""),
         sources: normalizeSources(data.sources),
+        comparison: data.comparison || null,
         metrics: data.metrics || {
           total_ms: 0, retrieval_ms: 0, llm_ms: 0,
           retrieval_calls: 0, llm_calls: 0,

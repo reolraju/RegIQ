@@ -51,6 +51,7 @@ class AgentState(TypedDict, total=False):
 
     draft_answer: str
     final_answer: str
+    comparison: Optional[dict]        # structured comparison payload (comparison intent only)
     grounded: bool
     guard_notes: str
 
@@ -104,14 +105,24 @@ Answer (with inline citations):"""
 COMPARISON_PROMPT = ChatPromptTemplate.from_template(
     """You are comparing how RBI and SEBI regulate the same topic.
 
-Use ONLY the two contexts below. If one regulator has no relevant material,
-say so explicitly rather than inventing a position.
+Use ONLY the two contexts below. If one regulator has no relevant material
+on a given dimension, write "No relevant material in the indexed corpus." in
+that cell rather than inventing a position.
 
-Structure your answer as:
-1. **RBI position** — with inline citations.
-2. **SEBI position** — with inline citations.
-3. **Key similarities**.
-4. **Key differences**.
+Respond with a JSON object only, no prose, no code fences. Schema:
+{{
+  "intro": "<one or two sentence framing of the comparison>",
+  "rows": [
+    {{"label": "<dimension name in Title Case, e.g. Scope, Capital requirement, Reporting timeline>",
+      "rbi":   "<RBI's position on this dimension, with inline (Source: …) citations>",
+      "sebi":  "<SEBI's position on this dimension, with inline (Source: …) citations>"}},
+    ...
+  ]
+}}
+
+Pick 3–6 substantive dimensions from the contexts (Scope / Eligibility, Key
+obligations, Reporting & disclosure, Penalties, Timelines, etc.). Every claim
+in `rbi` and `sebi` must cite its source inline. Keep each cell to 1–3 sentences.
 
 RBI Context:
 {rbi_context}
@@ -120,8 +131,7 @@ SEBI Context:
 {sebi_context}
 
 Question: {question}
-
-Answer:"""
+"""
 )
 
 CHECKLIST_PROMPT = ChatPromptTemplate.from_template(
@@ -332,14 +342,44 @@ def build_agent(retrieval_engine, llm: BaseChatModel):
             return {
                 "draft_answer": "I could not find specific information about this in the available regulatory documents.",
                 "docs": [],
+                "comparison": None,
             }
-        answer = comparison_chain.invoke({
+        raw = comparison_chain.invoke({
             "rbi_context": _format_context(rbi_docs) or "(no relevant RBI material found)",
             "sebi_context": _format_context(sebi_docs) or "(no relevant SEBI material found)",
             "question": state["question"],
         })
-        # Merge into a unified docs pool for the guard + response sources.
-        return {"draft_answer": answer, "docs": rbi_docs + sebi_docs}
+        parsed = _parse_json_blob(raw)
+        intro = (parsed.get("intro") or "").strip()
+        rows_raw = parsed.get("rows") or []
+        rows: list[dict] = []
+        for row in rows_raw:
+            if not isinstance(row, dict):
+                continue
+            label = (row.get("label") or "").strip()
+            rbi = (row.get("rbi") or "").strip()
+            sebi = (row.get("sebi") or "").strip()
+            if label and (rbi or sebi):
+                rows.append({"label": label, "rbi": rbi, "sebi": sebi})
+
+        if not rows:
+            # Fall back to the raw model text so the user still sees something.
+            log.warning("Comparison JSON parse failed; falling back to raw markdown")
+            return {"draft_answer": raw, "docs": rbi_docs + sebi_docs, "comparison": None}
+
+        # Markdown rendering for the hallucination guard + sourceless surfaces.
+        md_parts = [intro] if intro else []
+        for row in rows:
+            md_parts.append(f"### {row['label']}")
+            md_parts.append(f"**RBI.** {row['rbi']}")
+            md_parts.append(f"**SEBI.** {row['sebi']}")
+        md = "\n\n".join(md_parts)
+
+        return {
+            "draft_answer": md,
+            "docs": rbi_docs + sebi_docs,
+            "comparison": {"intro": intro, "rows": rows},
+        }
 
     def generate_checklist(state: AgentState) -> dict:
         if not state.get("docs"):

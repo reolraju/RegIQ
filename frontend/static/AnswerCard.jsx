@@ -2,7 +2,7 @@
    Live backend always returns markdown prose; intent affects the badge only. */
 
 const {
-  Icon, IntentBadge, ProductBadge, GroundedBadge,
+  Icon, IntentBadge, ProductBadge, GroundedBadge, ComparisonTable,
 } = window;
 const { useEffect: useEffectAC } = React;
 
@@ -25,7 +25,8 @@ function CitableBody({ html, onCite }) {
 }
 
 function AnswerCard({ entry, sourcesOpen, onToggleSources, onCite }) {
-  const { q, intent, productType, grounded, guardNotes, html, sources } = entry;
+  const { q, intent, productType, grounded, guardNotes, html, sources, comparison } = entry;
+  const showComparisonTable = intent === "comparison" && comparison && comparison.rows && comparison.rows.length > 0;
 
   return (
     <div className="answer-wrap fade-in">
@@ -63,7 +64,9 @@ function AnswerCard({ entry, sourcesOpen, onToggleSources, onCite }) {
         <h3 className="subhead">
           <span>Answer</span>
         </h3>
-        <CitableBody html={html} onCite={onCite} />
+        {showComparisonTable
+          ? <ComparisonTable comparison={comparison} />
+          : <CitableBody html={html} onCite={onCite} />}
       </div>
     </div>
   );
