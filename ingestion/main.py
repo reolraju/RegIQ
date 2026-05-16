@@ -108,43 +108,41 @@ def split_documents(docs: list[Document]) -> list[Document]:
     return chunks
 
 
-def _already_indexed_sources(vectorstore: Chroma) -> set[str]:
-    """Return the set of source filenames already present in ChromaDB."""
-    try:
-        result = vectorstore.get(include=["metadatas"])
-        return {m.get("source", "") for m in result.get("metadatas", []) if m}
-    except Exception:
-        return set()
+def _sync_chromadb(vectorstore: Chroma, chunks: list[Document], current_sources: set[str]) -> None:
+    """Keep ChromaDB in sync with the files currently on disk.
 
-
-def build_vectorstore_incremental(chunks: list[Document], embeddings) -> Chroma:
-    """Add only chunks whose source file is not already in the collection.
-
-    On a fresh deploy (empty /chroma_data) this behaves identically to a full
-    build.  On subsequent runs it skips files that are already indexed, so we
-    only pay embedding API cost for genuinely new circulars.
+    1. Remove chunks whose source file has been pruned/deleted.
+    2. Add chunks for source files not yet indexed.
     """
-    vectorstore = Chroma(
-        collection_name=COLLECTION,
-        embedding_function=embeddings,
-        persist_directory=str(CHROMA_DIR),
-    )
+    result = vectorstore.get(include=["metadatas"])
+    ids: list[str] = result.get("ids", [])
+    metadatas: list[dict] = result.get("metadatas", []) or []
 
-    already_indexed = _already_indexed_sources(vectorstore)
-    if already_indexed:
-        log.info("%d source file(s) already indexed — skipping them", len(already_indexed))
+    # --- Step 1: remove stale chunks ---
+    stale_ids = [
+        doc_id for doc_id, meta in zip(ids, metadatas)
+        if meta and meta.get("source", "") not in current_sources
+    ]
+    if stale_ids:
+        vectorstore.delete(ids=stale_ids)
+        log.info("Removed %d stale chunk(s) from ChromaDB (pruned files)", len(stale_ids))
 
-    new_chunks = [c for c in chunks if c.metadata.get("source", "") not in already_indexed]
+    # --- Step 2: add new chunks ---
+    indexed_sources = {
+        meta.get("source", "") for meta in metadatas
+        if meta and meta.get("source", "") not in
+        {m.get("source", "") for doc_id, m in zip(ids, metadatas) if doc_id in stale_ids}
+    }
+    # Re-query after deletion to get the clean indexed set
+    after = vectorstore.get(include=["metadatas"])
+    indexed_sources = {m.get("source", "") for m in (after.get("metadatas") or []) if m}
 
-    if not new_chunks:
-        log.info("Nothing new to index — ChromaDB is already up to date")
-        return vectorstore
-
-    log.info("Indexing %d new chunk(s) from %d chunk(s) total",
-             len(new_chunks), len(chunks))
-    vectorstore.add_documents(new_chunks)
-    log.info("Incremental ingestion complete — added %d chunks", len(new_chunks))
-    return vectorstore
+    new_chunks = [c for c in chunks if c.metadata.get("source", "") not in indexed_sources]
+    if new_chunks:
+        vectorstore.add_documents(new_chunks)
+        log.info("Added %d new chunk(s) to ChromaDB", len(new_chunks))
+    else:
+        log.info("ChromaDB already up to date — nothing to add")
 
 
 def main():
@@ -156,13 +154,21 @@ def main():
         raise FileNotFoundError(f"No documents found in {DOCS_DIR}")
 
     chunks = split_documents(docs)
+    current_sources = {c.metadata.get("source", "") for c in chunks}
 
     embeddings = GoogleGenerativeAIEmbeddings(
         model="models/gemini-embedding-001",
         google_api_key=GEMINI_API_KEY,
     )
+
+    vectorstore = Chroma(
+        collection_name=COLLECTION,
+        embedding_function=embeddings,
+        persist_directory=str(CHROMA_DIR),
+    )
     log.info("Connected to ChromaDB collection '%s' at %s", COLLECTION, CHROMA_DIR)
-    build_vectorstore_incremental(chunks, embeddings)
+
+    _sync_chromadb(vectorstore, chunks, current_sources)
 
 
 if __name__ == "__main__":
