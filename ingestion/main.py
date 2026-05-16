@@ -32,7 +32,6 @@ CIRCULAR_SEPARATOR = re.compile(r"\n-{3,}\n")
 
 
 def _parse_date(text: str) -> str | None:
-    """Find the first 'Date: Month DD, YYYY' in text and return ISO YYYY-MM-DD."""
     m = DATE_PATTERN.search(text)
     if not m:
         return None
@@ -70,8 +69,6 @@ def _build_metadata(source: str, text: str) -> dict:
 
 
 def _load_text_file(path: Path) -> list[Document]:
-    """Read a .txt file and split it at '---' separators so each circular
-    becomes its own Document with its own date / reference metadata."""
     raw = path.read_text(encoding="utf-8", errors="ignore")
     segments = [s.strip() for s in CIRCULAR_SEPARATOR.split(raw) if s.strip()]
     docs = []
@@ -81,13 +78,10 @@ def _load_text_file(path: Path) -> list[Document]:
 
 
 def _load_pdf_file(path: Path) -> list[Document]:
-    """Load a PDF with PyMuPDF. Pages from the same PDF inherit a single
-    document-level date if one can be found anywhere in the file."""
     loaded = PyMuPDFLoader(str(path)).load()
     full_text = "\n".join(p.page_content for p in loaded)
     base_meta = _build_metadata(path.name, full_text)
     for doc in loaded:
-        # PyMuPDFLoader sets its own metadata (page, source path); overlay ours.
         doc.metadata.update(base_meta)
     return loaded
 
@@ -114,19 +108,42 @@ def split_documents(docs: list[Document]) -> list[Document]:
     return chunks
 
 
-def build_vectorstore(chunks: list[Document]) -> Chroma:
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/gemini-embedding-001",
-        google_api_key=GEMINI_API_KEY,
-    )
-    log.info("Building ChromaDB collection '%s' at %s", COLLECTION, CHROMA_DIR)
-    vectorstore = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
+def _already_indexed_sources(vectorstore: Chroma) -> set[str]:
+    """Return the set of source filenames already present in ChromaDB."""
+    try:
+        result = vectorstore.get(include=["metadatas"])
+        return {m.get("source", "") for m in result.get("metadatas", []) if m}
+    except Exception:
+        return set()
+
+
+def build_vectorstore_incremental(chunks: list[Document], embeddings) -> Chroma:
+    """Add only chunks whose source file is not already in the collection.
+
+    On a fresh deploy (empty /chroma_data) this behaves identically to a full
+    build.  On subsequent runs it skips files that are already indexed, so we
+    only pay embedding API cost for genuinely new circulars.
+    """
+    vectorstore = Chroma(
         collection_name=COLLECTION,
+        embedding_function=embeddings,
         persist_directory=str(CHROMA_DIR),
     )
-    log.info("Ingestion complete — %d chunks indexed", len(chunks))
+
+    already_indexed = _already_indexed_sources(vectorstore)
+    if already_indexed:
+        log.info("%d source file(s) already indexed — skipping them", len(already_indexed))
+
+    new_chunks = [c for c in chunks if c.metadata.get("source", "") not in already_indexed]
+
+    if not new_chunks:
+        log.info("Nothing new to index — ChromaDB is already up to date")
+        return vectorstore
+
+    log.info("Indexing %d new chunk(s) from %d chunk(s) total",
+             len(new_chunks), len(chunks))
+    vectorstore.add_documents(new_chunks)
+    log.info("Incremental ingestion complete — added %d chunks", len(new_chunks))
     return vectorstore
 
 
@@ -139,7 +156,13 @@ def main():
         raise FileNotFoundError(f"No documents found in {DOCS_DIR}")
 
     chunks = split_documents(docs)
-    build_vectorstore(chunks)
+
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-001",
+        google_api_key=GEMINI_API_KEY,
+    )
+    log.info("Connected to ChromaDB collection '%s' at %s", COLLECTION, CHROMA_DIR)
+    build_vectorstore_incremental(chunks, embeddings)
 
 
 if __name__ == "__main__":
