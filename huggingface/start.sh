@@ -1,21 +1,15 @@
 #!/bin/sh
 # HuggingFace Spaces entrypoint:
-#   1) one-shot ingestion (skipped if Chroma already populated)
+#   1) ingestion on every boot — incremental logic skips already-indexed files,
+#      so new circulars committed by the daily workflow get picked up on redeploy
 #   2) FastAPI backend on :8000 (internal)
 #   3) Streamlit frontend on :7860 (the public Spaces port)
 set -eu
 
 : "${GEMINI_API_KEY:?GEMINI_API_KEY must be set in the Space secrets}"
 
-CHROMA_FLAG="${CHROMA_DIR}/.regiq_ingested"
-
-if [ ! -f "$CHROMA_FLAG" ]; then
-  echo "[start] running ingestion into $CHROMA_DIR ..."
-  python /app/ingest_main.py
-  touch "$CHROMA_FLAG"
-else
-  echo "[start] ingestion already done, skipping"
-fi
+echo "[start] running ingestion into $CHROMA_DIR ..."
+python /app/ingest_main.py
 
 echo "[start] launching backend on :8000 ..."
 cd /app/backend
