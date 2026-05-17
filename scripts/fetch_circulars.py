@@ -54,8 +54,8 @@ SOURCES: list[dict] = [
         "name": "SEBI Circulars",
         "regulator": "SEBI",
         "rss_url": "https://www.sebi.gov.in/sebirss.xml",
-        "index_url": "https://www.sebi.gov.in/sebiweb/home/HomeAction.do?doListing=yes&sid=1&ssid=6&smid=0",
-        "link_selector": "a[href*='.pdf'], a[href*='.PDF']",
+        "index_url": "https://www.sebi.gov.in/legal/circulars.html",
+        "link_selector": "a[href*='.pdf'], a[href*='.PDF'], a[href*='sebi_data']",
         "base_url": "https://www.sebi.gov.in",
     },
 ]
@@ -152,28 +152,48 @@ def _extract_pdf_from_page(session: requests.Session, page_url: str, base_url: s
 
 
 def _parse_rss_links(xml_bytes: bytes) -> list[str]:
-    """Return the list of <link> URLs from an RSS or Atom feed."""
+    """Return URLs from an RSS/Atom feed: direct PDFs first, then HTML item links.
+
+    Checks (in order per item):
+      1. <enclosure url="..."/> — some feeds attach the PDF directly
+      2. <link> text or href — the canonical item URL (may be an HTML page)
+    Also scans <description> for embedded PDF hrefs.
+    """
     try:
         root = ET.fromstring(xml_bytes)
     except ET.ParseError as e:
         log.warning("RSS XML parse error: %s", e)
         return []
 
-    links: list[str] = []
+    pdf_direct: list[str] = []
+    item_links: list[str] = []
+
     for elem in root.iter():
-        tag = elem.tag.rsplit("}", 1)[-1]  # strip XML namespace
+        tag = elem.tag.rsplit("}", 1)[-1]
         if tag not in ("item", "entry"):
             continue
+
+        item_link: str = ""
         for child in elem:
             child_tag = child.tag.rsplit("}", 1)[-1]
-            if child_tag != "link":
-                continue
-            # RSS: <link>URL</link>; Atom: <link href="URL"/>
-            href = (child.get("href") or (child.text or "")).strip()
-            if href:
-                links.append(href)
-                break
-    return links
+            if child_tag == "enclosure":
+                url = child.get("url", "").strip()
+                if url and _is_pdf_url(url):
+                    pdf_direct.append(url)
+            elif child_tag == "link" and not item_link:
+                href = (child.get("href") or (child.text or "")).strip()
+                if href:
+                    item_link = href
+            elif child_tag == "description":
+                desc = child.text or ""
+                for href in re.findall(r'href=["\']([^"\']+\.pdf)["\']', desc, re.IGNORECASE):
+                    pdf_direct.append(href)
+
+        if item_link:
+            item_links.append(item_link)
+
+    # Return direct PDF URLs first so we skip HTML resolution for those
+    return pdf_direct + item_links
 
 
 def _discover_via_rss(session: requests.Session, source: dict) -> list[str]:
