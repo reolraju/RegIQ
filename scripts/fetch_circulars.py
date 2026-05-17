@@ -143,15 +143,29 @@ def _extract_pdf_from_page(session: requests.Session, page_url: str, base_url: s
     resp = _http_get(session, page_url)
     if resp is None:
         return None
-    # Some regulators (e.g. SEBI) serve PDFs at .html URLs — detect by magic bytes or Content-Type.
+
+    # Case 1: URL directly serves a PDF (Content-Type or magic bytes)
     ct = resp.headers.get("Content-Type", "")
     if "pdf" in ct.lower() or resp.content[:4] == b"%PDF":
         return page_url
+
+    # Case 2: PDF linked or embedded in the HTML
     soup = BeautifulSoup(resp.text, "html.parser")
-    for a in soup.find_all("a", href=True):
-        absolute = urljoin(base_url, a["href"])
-        if _is_pdf_url(absolute):
-            return absolute
+    for tag, attr in (("a", "href"), ("iframe", "src"), ("embed", "src"), ("object", "data")):
+        for el in soup.find_all(tag, attrs={attr: True}):
+            absolute = urljoin(base_url, el[attr])
+            if _is_pdf_url(absolute):
+                return absolute
+
+    # Case 3: PDF URL referenced in inline JavaScript / JSON config blob
+    match = re.search(r'https?://[^\s"\'<>()]+?\.pdf', resp.text, re.IGNORECASE)
+    if match:
+        return match.group(0)
+
+    log.debug(
+        "no PDF found on %s (ct=%s, size=%d, head=%r)",
+        page_url, ct, len(resp.content), resp.text[:200],
+    )
     return None
 
 
@@ -336,7 +350,13 @@ def main(argv: list[str] | None = None) -> int:
         "--dry-run", action="store_true",
         help="Discover PDF links only; do not download or update the manifest",
     )
+    parser.add_argument(
+        "--debug", action="store_true",
+        help="Verbose logging — prints response details for pages where no PDF is found",
+    )
     args = parser.parse_args(argv)
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     manifest = _load_manifest()
     session = _make_session()
