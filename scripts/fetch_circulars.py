@@ -139,23 +139,14 @@ def _is_pdf_url(url: str) -> bool:
     return url.lower().split("?")[0].endswith(".pdf")
 
 
-def _is_pdf_response(session: requests.Session, url: str) -> bool:
-    """HEAD request to check if the URL serves PDF content regardless of its extension."""
-    try:
-        resp = session.head(url, timeout=REQUEST_TIMEOUT, allow_redirects=True)
-        ct = resp.headers.get("Content-Type", "")
-        return "pdf" in ct.lower()
-    except requests.RequestException:
-        return False
-
-
 def _extract_pdf_from_page(session: requests.Session, page_url: str, base_url: str) -> str | None:
-    # Some regulators (e.g. SEBI) serve PDFs at .html URLs — check Content-Type first.
-    if _is_pdf_response(session, page_url):
-        return page_url
     resp = _http_get(session, page_url)
     if resp is None:
         return None
+    # Some regulators (e.g. SEBI) serve PDFs at .html URLs — detect by magic bytes or Content-Type.
+    ct = resp.headers.get("Content-Type", "")
+    if "pdf" in ct.lower() or resp.content[:4] == b"%PDF":
+        return page_url
     soup = BeautifulSoup(resp.text, "html.parser")
     for a in soup.find_all("a", href=True):
         absolute = urljoin(base_url, a["href"])
