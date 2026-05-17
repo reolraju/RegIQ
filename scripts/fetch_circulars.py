@@ -158,9 +158,15 @@ def _extract_pdf_from_page(session: requests.Session, page_url: str, base_url: s
                 return absolute
 
     # Case 3: PDF URL referenced in inline JavaScript / JSON config blob
-    match = re.search(r'https?://[^\s"\'<>()]+?\.pdf', resp.text, re.IGNORECASE)
-    if match:
-        return match.group(0)
+    all_pdf_urls = re.findall(r'https?://[^\s"\'<>()]+?\.pdf', resp.text, re.IGNORECASE)
+    if all_pdf_urls:
+        # Prefer direct PDF URLs over viewer wrapper URLs (e.g. /web/?file=<pdf_url>)
+        direct = [u for u in all_pdf_urls if not re.search(r'[?&]file=', u)]
+        if direct:
+            return direct[0]
+        # Unwrap the viewer pattern to get the actual PDF URL
+        embedded = re.search(r'[?&]file=(https?://[^\s"\'&<>()]+?\.pdf)', all_pdf_urls[0], re.IGNORECASE)
+        return embedded.group(1) if embedded else all_pdf_urls[0]
 
     log.debug(
         "no PDF found on %s (ct=%s, size=%d, head=%r)",
