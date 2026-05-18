@@ -13,7 +13,7 @@ Ask plain-English questions about RBI and SEBI regulations and get accurate, sou
 | Reranker | cross-encoder/ms-marco-MiniLM (Phase 2) |
 | Framework | LangChain + LangGraph |
 | Backend | FastAPI |
-| Frontend | Streamlit |
+| Frontend | Static React/HTML SPA served by FastAPI |
 | PDF parsing | PyMuPDF (Phase 2) |
 | Evaluation | RAGAs (Phase 4) |
 | Tracing | LangSmith (Phase 4) |
@@ -59,8 +59,9 @@ RegIQ/
 │   ├── metrics.py      # per-request token / cost / latency tracker
 │   ├── requirements.txt
 │   └── Dockerfile
-├── frontend/           # Streamlit UI with cost & latency dashboard
-│   ├── app.py
+├── frontend/           # FastAPI server + React/HTML SPA (RegIQ design system)
+│   ├── app.py          # serves static files + proxies POST /api/query → backend
+│   ├── static/         # index.html, JSX components, CSS tokens, brand assets
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── evaluation/         # Golden dataset + RAGAs scoring (Phase 4)

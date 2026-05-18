@@ -1,0 +1,333 @@
+/* =========================================================================
+   RegIQ Design System — Colors & Type
+   =========================================================================
+   Brand: regulatory intelligence for Indian financial markets (RBI + SEBI).
+   Mood: "ink on paper, sourced and certain." Modern but with the gravitas of
+   legal/regulatory typesetting. Indigo is the primary brand accent (per the
+   HuggingFace Spaces metadata: colorFrom: indigo, colorTo: purple). Each
+   regulator gets a distinct, restrained accent so source citations are
+   instantly identifiable.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Type — IBM Plex family
+   Plex Serif for display/headlines (regulatory gravitas, legal typesetting
+   echo), Plex Sans for UI/body (clean, government-grade neutrality), Plex
+   Mono for citation refs, circular numbers, metrics, code.
+   ------------------------------------------------------------------------- */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+:root {
+  /* ------------------------------------------------------------------
+     Core palette — neutrals (ink → paper)
+     A warm-cool neutral ramp. "Paper" backgrounds carry a faint warmth
+     (legal document, archival), "Ink" foregrounds tilt slightly indigo.
+     ------------------------------------------------------------------ */
+  --ink-900: #0b1020;   /* deepest ink — display headings, primary buttons */
+  --ink-800: #141a2e;   /* body text on paper */
+  --ink-700: #2a3148;   /* secondary text */
+  --ink-600: #4b536b;   /* tertiary / metadata */
+  --ink-500: #6b7388;   /* muted text, captions */
+  --ink-400: #9aa1b3;   /* placeholder, disabled label */
+  --ink-300: #c3c8d4;   /* hairline dividers on paper */
+  --ink-200: #dee1ea;   /* subtle borders, input idle */
+  --ink-100: #ecedf2;   /* soft surface fills */
+  --ink-050: #f4f5f8;   /* lowest contrast surface */
+
+  --paper:    #fbfaf7;   /* primary app background — warm off-white */
+  --paper-2:  #f5f3ee;   /* secondary panel / sidebar */
+  --paper-3:  #ebe7df;   /* divider on paper, watermark */
+  --white:    #ffffff;   /* cards, popovers */
+
+  /* ------------------------------------------------------------------
+     Brand — Indigo primary, Iris secondary (per HF Spaces metadata)
+     ------------------------------------------------------------------ */
+  --indigo-50:  #eef0ff;
+  --indigo-100: #dde1ff;
+  --indigo-200: #b9c0ff;
+  --indigo-300: #8e98ff;
+  --indigo-400: #6a73f0;
+  --indigo-500: #4c54dc;   /* PRIMARY — links, focus, key CTAs */
+  --indigo-600: #3a40b8;
+  --indigo-700: #2c3194;
+  --indigo-800: #1f2370;
+  --indigo-900: #141849;
+
+  --iris-50:    #f5eefe;
+  --iris-300:   #b48ff0;
+  --iris-500:   #8a4fd6;   /* SECONDARY — gradient companion, highlights */
+  --iris-700:   #5a2b9a;
+
+  /* ------------------------------------------------------------------
+     Regulator accents — restrained, source-coded
+     RBI = ink-blue (Reserve Bank, traditional finance)
+     SEBI = saffron-ochre (Indian market, distinguishes from RBI)
+     ------------------------------------------------------------------ */
+  --rbi-50:   #e8eef7;
+  --rbi-100:  #cfdcee;
+  --rbi-500:  #1f4e9a;   /* RBI badge fill / pill */
+  --rbi-700:  #133766;
+  --rbi-900:  #0a2447;
+
+  --sebi-50:  #fbf2e2;
+  --sebi-100: #f6e4be;
+  --sebi-500: #c47a14;   /* SEBI badge fill / pill */
+  --sebi-700: #8a540a;
+  --sebi-900: #4d2f06;
+
+  /* ------------------------------------------------------------------
+     Semantic — keep muted; this is a serious tool, not a dashboard
+     ------------------------------------------------------------------ */
+  --success-50:  #e8f4ec;
+  --success-500: #2f8d4f;   /* grounded answer, verified citation */
+  --success-700: #1d5e34;
+
+  --warn-50:     #fbf3dc;
+  --warn-500:    #b08412;   /* partial grounding, stale doc */
+  --warn-700:    #7a5a08;
+
+  --danger-50:   #fae9e7;
+  --danger-500:  #b8362b;   /* hallucination flagged, retrieval failure */
+  --danger-700:  #7d2118;
+
+  --info-50:     #e6f1f7;
+  --info-500:    #2773a8;
+  --info-700:    #18476b;
+
+  /* ------------------------------------------------------------------
+     Citation highlight — "legal highlighter" pale yellow
+     Used to mark spans inside source excerpts that ground the answer.
+     ------------------------------------------------------------------ */
+  --highlight:        #fff3a8;
+  --highlight-strong: #ffe24d;
+
+  /* ------------------------------------------------------------------
+     Surface / elevation system — paper-on-paper, not glass.
+     ------------------------------------------------------------------ */
+  --surface-app:      var(--paper);
+  --surface-panel:    var(--paper-2);
+  --surface-card:     var(--white);
+  --surface-raised:   var(--white);
+  --surface-inverse:  var(--ink-900);
+
+  /* ------------------------------------------------------------------
+     Borders & hairlines
+     ------------------------------------------------------------------ */
+  --border-subtle: var(--ink-200);
+  --border-strong: var(--ink-300);
+  --border-focus:  var(--indigo-500);
+  --border-inverse: rgba(255, 255, 255, 0.12);
+
+  /* ------------------------------------------------------------------
+     Shadows — soft, paper-like. Avoid harsh drop shadows.
+     ------------------------------------------------------------------ */
+  --shadow-xs: 0 1px 0 rgba(11, 16, 32, 0.04), 0 1px 2px rgba(11, 16, 32, 0.04);
+  --shadow-sm: 0 1px 2px rgba(11, 16, 32, 0.05), 0 2px 6px rgba(11, 16, 32, 0.06);
+  --shadow-md: 0 4px 10px rgba(11, 16, 32, 0.06), 0 12px 28px rgba(11, 16, 32, 0.08);
+  --shadow-lg: 0 12px 30px rgba(11, 16, 32, 0.08), 0 28px 60px rgba(11, 16, 32, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(76, 84, 220, 0.22);
+
+  /* ------------------------------------------------------------------
+     Radii — modest, document-like. Nothing pill-shaped except pills.
+     ------------------------------------------------------------------ */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* ------------------------------------------------------------------
+     Spacing scale — 4px base
+     ------------------------------------------------------------------ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* ------------------------------------------------------------------
+     Motion — restrained, no bounces. Regulatory tools shouldn't feel toy-y.
+     ------------------------------------------------------------------ */
+  --ease-standard: cubic-bezier(0.2, 0.6, 0.2, 1);
+  --ease-out:      cubic-bezier(0.16, 0.84, 0.4, 1);
+  --ease-in:       cubic-bezier(0.4, 0.0, 0.84, 0.16);
+  --dur-fast:   120ms;
+  --dur-base:   200ms;
+  --dur-slow:   320ms;
+
+  /* ------------------------------------------------------------------
+     Type — families
+     ------------------------------------------------------------------ */
+  --font-serif: "IBM Plex Serif", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --font-sans:  "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono:  "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ------------------------------------------------------------------
+     Type — semantic roles
+     Display = Serif, headlines + answer headers
+     UI/body = Sans
+     Citations / refs / metrics = Mono
+     ------------------------------------------------------------------ */
+  --font-display:  var(--font-serif);
+  --font-body:     var(--font-sans);
+  --font-citation: var(--font-mono);
+
+  /* Type scale — desktop-first. Mobile may scale down via media queries. */
+  --fs-display:  56px;   /* hero / brand mark */
+  --fs-h1:       40px;
+  --fs-h2:       30px;
+  --fs-h3:       22px;
+  --fs-h4:       18px;
+  --fs-body-lg:  18px;
+  --fs-body:     16px;
+  --fs-body-sm:  14px;
+  --fs-caption:  13px;
+  --fs-micro:    11px;
+
+  --lh-tight:   1.1;
+  --lh-snug:    1.25;
+  --lh-normal:  1.5;
+  --lh-relaxed: 1.65;
+
+  --ls-display: -0.02em;
+  --ls-h1:      -0.018em;
+  --ls-h2:      -0.012em;
+  --ls-h3:      -0.006em;
+  --ls-body:    0;
+  --ls-caps:    0.08em;
+}
+
+/* =========================================================================
+   Semantic type classes
+   ========================================================================= */
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-display);
+  color: var(--ink-900);
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-h1);
+  color: var(--ink-900);
+}
+
+h2, .h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-h2);
+  color: var(--ink-900);
+}
+
+h3, .h3 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-h3);
+  color: var(--ink-900);
+}
+
+h4, .h4 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--fs-h4);
+  line-height: var(--lh-snug);
+  color: var(--ink-800);
+}
+
+.body-lg {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-relaxed);
+  color: var(--ink-800);
+}
+
+p, .body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--fs-body);
+  line-height: var(--lh-relaxed);
+  color: var(--ink-800);
+}
+
+.body-sm {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-normal);
+  color: var(--ink-700);
+}
+
+.caption {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--ink-600);
+}
+
+.micro,
+.eyebrow {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--fs-micro);
+  line-height: 1.2;
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--ink-600);
+}
+
+.citation,
+code, .code, kbd, samp {
+  font-family: var(--font-citation);
+  font-size: 0.92em;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-relaxed);
+  color: var(--ink-700);
+}
+
+/* Inline citation marker, e.g. [1], [RBI/2022-23/111] */
+.cite-ref {
+  font-family: var(--font-citation);
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--indigo-600);
+  vertical-align: super;
+  line-height: 0;
+  padding: 0 2px;
+}
+
+/* Highlighted span inside a source excerpt */
+mark, .mark {
+  background: var(--highlight);
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 2px;
+  box-decoration-break: clone;
+}

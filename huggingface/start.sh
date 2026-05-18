@@ -2,7 +2,7 @@
 # HuggingFace Spaces entrypoint:
 #   1) one-shot ingestion (skipped if Chroma already populated)
 #   2) FastAPI backend on :8000 (internal)
-#   3) Streamlit frontend on :7860 (the public Spaces port)
+#   3) FastAPI frontend (React SPA + proxy) on :7860 (the public Spaces port)
 set -eu
 
 : "${GEMINI_API_KEY:?GEMINI_API_KEY must be set in the Space secrets}"
@@ -33,10 +33,7 @@ done
 
 trap 'kill $BACKEND_PID 2>/dev/null || true' EXIT INT TERM
 
-echo "[start] launching Streamlit on :${PORT} ..."
+echo "[start] launching frontend on :${PORT} ..."
 cd /app/frontend
-exec streamlit run app.py \
-  --server.port "${PORT}" \
-  --server.address 0.0.0.0 \
-  --server.headless true \
-  --browser.gatherUsageStats false
+export BACKEND_URL="http://127.0.0.1:8000"
+exec uvicorn app:app --host 0.0.0.0 --port "${PORT}"

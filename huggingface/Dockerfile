@@ -1,7 +1,7 @@
 # All-in-one HuggingFace Spaces image.
 # Spaces gives you a single container exposing one port. We run ingestion
-# (one-shot) -> FastAPI backend -> Streamlit frontend on 7860 inside the
-# same container, supervised by a small shell script.
+# (one-shot) -> FastAPI backend -> FastAPI frontend (React SPA) on 7860
+# inside the same container, supervised by a small shell script.
 
 FROM python:3.11-slim
 
