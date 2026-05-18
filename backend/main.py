@@ -203,6 +203,17 @@ class QueryMetrics(BaseModel):
     cost_usd: float
 
 
+class ComparisonRow(BaseModel):
+    label: str
+    rbi: str
+    sebi: str
+
+
+class ComparisonPayload(BaseModel):
+    intro: str = ""
+    rows: list[ComparisonRow]
+
+
 class QueryResponse(BaseModel):
     answer: str
     sources: list[SourceChunk]
@@ -211,6 +222,7 @@ class QueryResponse(BaseModel):
     grounded: bool = True
     guard_notes: Optional[str] = None
     metrics: Optional[QueryMetrics] = None
+    comparison: Optional[ComparisonPayload] = None
 
 
 def _to_source_chunks(docs: list[Document]) -> list[SourceChunk]:
@@ -274,6 +286,14 @@ async def query(req: QueryRequest):
         snapshot["tokens_input"], snapshot["tokens_output"], snapshot["cost_usd"],
     )
 
+    comparison_state = final_state.get("comparison")
+    comparison_payload: Optional[ComparisonPayload] = None
+    if comparison_state and comparison_state.get("rows"):
+        comparison_payload = ComparisonPayload(
+            intro=comparison_state.get("intro", ""),
+            rows=[ComparisonRow(**r) for r in comparison_state["rows"]],
+        )
+
     return QueryResponse(
         answer=answer,
         sources=sources,
@@ -282,4 +302,5 @@ async def query(req: QueryRequest):
         grounded=bool(final_state.get("grounded", True)),
         guard_notes=final_state.get("guard_notes") or None,
         metrics=QueryMetrics(**snapshot),
+        comparison=comparison_payload,
     )

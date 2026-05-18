@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <defs>
+    <pattern id="docs" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+      <g opacity="0.5">
+        <rect x="10" y="14" width="36" height="46" rx="2" fill="none" stroke="#0b1020" stroke-width="1.2"></rect>
+        <line x1="14" y1="22" x2="42" y2="22" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+        <line x1="14" y1="28" x2="38" y2="28" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+        <line x1="14" y1="34" x2="42" y2="34" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+        <line x1="14" y1="40" x2="36" y2="40" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+        <line x1="14" y1="46" x2="40" y2="46" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+        <line x1="14" y1="52" x2="34" y2="52" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+
+        <rect x="42" y="38" width="32" height="42" rx="2" fill="none" stroke="#0b1020" stroke-width="1.2"></rect>
+        <line x1="46" y1="46" x2="70" y2="46" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+        <line x1="46" y1="52" x2="66" y2="52" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+        <line x1="46" y1="58" x2="70" y2="58" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+        <line x1="46" y1="64" x2="64" y2="64" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+        <line x1="46" y1="70" x2="68" y2="70" stroke="#0b1020" stroke-width="1" stroke-linecap="round"></line>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="240" height="240" fill="url(#docs)"></rect>
+</svg>
