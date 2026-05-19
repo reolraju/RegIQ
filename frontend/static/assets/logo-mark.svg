@@ -1,10 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="RegIQ mark">
-  
-  <rect width="64" height="64" rx="14" fill="#4c54dc"></rect>
-  
-  <path d="M 26 18 L 20 18 L 20 46 L 26 46" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"></path>
-  
-  <path d="M 38 18 L 44 18 L 44 46 L 38 46" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter"></path>
-  
-  <circle cx="32" cy="32" r="3" fill="#ffffff"></circle>
+  <rect width="64" height="64" rx="12" fill="#fbfaf7" stroke="#dee1ea" stroke-width="1"/>
+  <text x="32" y="48" text-anchor="middle"
+        font-family="IBM Plex Serif, Source Serif Pro, Georgia, serif"
+        font-weight="500" font-style="italic" font-size="44" fill="#3a40b8">R</text>
 </svg>

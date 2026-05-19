@@ -1,4 +1,3 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 40" role="img" aria-label="RegIQ">
-  <text x="0" y="30" font-family="IBM Plex Sans, ui-sans-serif, system-ui, sans-serif" font-weight="700" font-size="32" letter-spacing="-0.6" fill="#fbfaf7">Reg<tspan fill="#8e98ff">IQ</tspan></text>
-  <rect x="138" y="24" width="6" height="6" rx="1.5" fill="#8e98ff"></rect>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 156 40" role="img" aria-label="RegIQ">
+  <text x="0" y="30" font-family="IBM Plex Serif, Source Serif Pro, Georgia, serif" font-weight="500" font-size="32" letter-spacing="-0.5" fill="#fbfaf7">Reg<tspan font-style="italic" fill="#b9c0ff">IQ</tspan></text>
 </svg>

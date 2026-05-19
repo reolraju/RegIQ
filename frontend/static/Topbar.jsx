@@ -7,7 +7,7 @@ function Topbar({ onReset, lastSync }) {
   return (
     <header className="topbar">
       <a className="topbar-brand wordmark" href="#" onClick={(e) => { e.preventDefault(); onReset && onReset(); }}>
-        Reg<span className="iq">IQ</span><span className="dot" />
+        Reg<span className="iq">IQ</span>
       </a>
       <div className="topbar-strap">
         <Icon name="database" size={14} className="strap-icon" />
