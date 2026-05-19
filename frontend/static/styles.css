@@ -42,19 +42,18 @@ button, a { color: inherit; }
   min-width: 268px;
 }
 .topbar-brand.wordmark {
-  font-family: var(--font-sans); font-weight: 700;
-  font-size: 22px; letter-spacing: -0.02em;
+  font-family: var(--font-serif); font-weight: 500;
+  font-size: 26px; letter-spacing: -0.018em;
   color: var(--ink-900); text-decoration: none;
   line-height: 1;
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: baseline;
   white-space: nowrap;
 }
 .topbar-brand.wordmark:hover { text-decoration: none; }
-.topbar-brand.wordmark .iq { color: var(--indigo-500); }
-.topbar-brand.wordmark .dot {
-  width: 5px; height: 5px; border-radius: 1.5px;
-  background: var(--indigo-500); margin-left: 5px; margin-bottom: -1px;
-  align-self: flex-end;
+.topbar-brand.wordmark .iq {
+  font-style: italic;
+  color: var(--indigo-600);
+  margin-left: 1px;
 }
 .topbar-strap {
   display: flex; align-items: center;
