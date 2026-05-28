@@ -2,6 +2,8 @@
 
 Ask plain-English questions about RBI and SEBI regulations and get accurate, sourced answers traced back to specific circulars.
 
+**Live demo:** https://huggingface.co/spaces/charles43/regiq
+
 ## Tech Stack
 
 | Layer | Technology |
