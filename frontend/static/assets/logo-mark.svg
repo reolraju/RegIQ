@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="RegIQ mark">
+  <rect width="64" height="64" rx="12" fill="#fbfaf7" stroke="#dee1ea" stroke-width="1"/>
+  <text x="32" y="48" text-anchor="middle"
+        font-family="IBM Plex Serif, Source Serif Pro, Georgia, serif"
+        font-weight="500" font-style="italic" font-size="44" fill="#3a40b8">R</text>
+</svg>

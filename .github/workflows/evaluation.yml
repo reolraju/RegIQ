@@ -1,0 +1,105 @@
+name: RAGAs Evaluation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "ingestion/**"
+      - "evaluation/**"
+      - "docker-compose.yml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - name: Skip when no API key is configured
+        id: precheck
+        run: |
+          if [ -z "${GEMINI_API_KEY}" ]; then
+            echo "::warning::GEMINI_API_KEY secret not set; skipping evaluation"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.precheck.outputs.skip != 'true'
+
+      - name: Build & start stack
+        if: steps.precheck.outputs.skip != 'true'
+        run: |
+          docker compose up --build -d ingestion backend
+          # ingestion is one-shot; wait for it to finish, then for backend health
+          docker compose wait ingestion || true
+          for i in {1..60}; do
+            if curl -sf http://localhost:8000/health > /dev/null; then
+              echo "backend up"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "backend never became healthy"
+          docker compose logs backend
+          exit 1
+
+      - uses: actions/setup-python@v5
+        if: steps.precheck.outputs.skip != 'true'
+        with:
+          python-version: "3.11"
+
+      - name: Install RAGAs
+        if: steps.precheck.outputs.skip != 'true'
+        run: pip install -r evaluation/requirements.txt
+
+      - name: Run evaluation
+        if: steps.precheck.outputs.skip != 'true'
+        env:
+          BACKEND_URL: http://localhost:8000
+        run: python evaluation/evaluate.py
+
+      - name: Upload results
+        if: always() && steps.precheck.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ragas-results-${{ github.run_id }}
+          path: evaluation/results/
+
+      - name: Post summary
+        if: github.event_name == 'pull_request' && steps.precheck.outputs.skip != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'evaluation/results/eval_summary.json';
+            if (!fs.existsSync(path)) {
+              core.warning('No eval summary to post');
+              return;
+            }
+            const summary = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const rows = Object.entries(summary.aggregate_scores)
+              .map(([k, v]) => `| ${k} | ${v.toFixed(4)} |`).join('\n');
+            const body = [
+              '### RAGAs evaluation',
+              `Judge: \`${summary.judge_model}\` · Questions scored: ${summary.num_questions}`,
+              '',
+              '| Metric | Score |',
+              '|---|---|',
+              rows,
+            ].join('\n');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+      - name: Tear down
+        if: always() && steps.precheck.outputs.skip != 'true'
+        run: docker compose down -v
