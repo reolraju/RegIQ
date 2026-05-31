@@ -7,6 +7,11 @@
   <link rel="icon" href="/static/assets/logo-mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/colors_and_type.css">
   <link rel="stylesheet" href="/static/styles.css">
+
+  <!-- Anonymous usage analytics: runtime config (injected by the server) then
+       the PostHog loader. Both no-op when no POSTHOG_KEY is configured. -->
+  <script src="/env.js"></script>
+  <script src="/static/analytics.js"></script>
 </head>
 <body>
   <div id="root"></div>

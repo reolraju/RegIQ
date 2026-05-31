@@ -105,8 +105,17 @@ function App() {
       setHistory((h) => [entry, ...h]);
       setActiveId(id);
       setComposerValue("");
+
+      // Anonymous usage signal — metadata only, never the question text.
+      window.regiqTrack("query_submitted", {
+        regulator: filters.regulator,
+        used_date_range: !!filters.useDateRange,
+        intent: entry.intent,
+        grounded: entry.grounded,
+      });
     } catch (e) {
       setError(e.message || String(e));
+      window.regiqTrack("query_failed", { regulator: filters.regulator });
     } finally {
       setLoading(false);
       setPendingQuestion("");

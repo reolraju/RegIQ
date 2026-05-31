@@ -47,6 +47,9 @@ services:
       context: ./frontend
     environment:
       - BACKEND_URL=http://backend:8000
+      # Optional anonymous usage analytics (PostHog) — left empty disables it.
+      - POSTHOG_KEY=${POSTHOG_KEY:-}
+      - POSTHOG_HOST=${POSTHOG_HOST:-https://us.i.posthog.com}
     ports:
       - "8501:8501"
     depends_on:

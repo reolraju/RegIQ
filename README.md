@@ -147,10 +147,40 @@ Outputs land in `evaluation/results/`:
 
 See [`evaluation/README.md`](evaluation/README.md) for details.
 
+## Usage analytics (optional)
+
+RegIQ can record **anonymous** usage via [PostHog](https://posthog.com) so you
+can see how many people use the app and their approximate location, without
+adding a login or storing data yourself (the data lives in your PostHog cloud
+dashboard, so it survives container restarts).
+
+It is **off by default**. To enable it:
+
+1. Create a free PostHog account and copy your **project API key**
+   (Project settings → API keys — it looks like `phc_…`).
+2. Set `POSTHOG_KEY` (and optionally `POSTHOG_HOST`, default
+   `https://us.i.posthog.com`; use `https://eu.i.posthog.com` for the EU cloud)
+   in your `.env` (Docker Compose) or the Space's variables (HuggingFace).
+
+What gets tracked:
+- **Page visits** → unique/total visitor counts ("how many people used this").
+- A **`query_submitted`** event with metadata only — the chosen regulator
+  filter, whether a date range was used, the agent intent, and whether the
+  answer was grounded.
+- **Approximate location** (country / region / city), derived server-side by
+  PostHog from the visitor's IP.
+
+What is **never** sent: the question text, names, emails, or any direct
+identifier (the app has no login). Browser "Do Not Track" is respected, no
+session recording is enabled, and no per-person profiles are created.
+
 ## Deploying to HuggingFace Spaces
 
 1. Create a new **Docker** Space at huggingface.co.
 2. Set `GEMINI_API_KEY` under **Settings → Repository secrets**.
+   To enable analytics, also add `POSTHOG_KEY` (and optionally `POSTHOG_HOST`)
+   under **Settings → Variables** (the PostHog project key is a public
+   client-side key, so a Variable is fine; a Secret works too).
 3. Either:
    - point the Space at this repo, copying `huggingface/Dockerfile` and `huggingface/README.md` to the root, or
    - configure `HF_TOKEN` + `HF_SPACE` secrets on this GitHub repo and let the [`deploy_huggingface`](.github/workflows/deploy_huggingface.yml) workflow stage and push for you on every `main` push.
