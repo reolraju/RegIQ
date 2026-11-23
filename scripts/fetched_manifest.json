@@ -1,4 +1,35 @@
 {
-  "version": 1,
-  "files": {}
+  "files": {
+    "https://rbidocs.rbi.org.in/rdocs/notification/PDFs/476MDDC5A297B05094F8096910FE97E1AD34D.PDF": {
+      "fetched_at": "2026-11-23T17:03:02.176575+00:00",
+      "filename": "rbi__476MDDC5A297B05094F8096910FE97E1AD34D.PDF",
+      "regulator": "RBI",
+      "sha256": "72f6d6d9fbf7e46f8aacc063d12856e57d639460ca40a38b598057a62f4a8248"
+    },
+    "https://rbidocs.rbi.org.in/rdocs/notification/PDFs/NT3043637FDEB03CF4D13A0F337D17BF78F0B.PDF": {
+      "fetched_at": "2026-11-23T17:03:00.924537+00:00",
+      "filename": "rbi__NT3043637FDEB03CF4D13A0F337D17BF78F0B.PDF",
+      "regulator": "RBI",
+      "sha256": "ff1b4f6fb8965a0dee27a26fe17e9540a362d6fa02baedd617a38a886b15db24"
+    },
+    "https://rbidocs.rbi.org.in/rdocs/notification/PDFs/NT30511C215AE336743B58993F87C02ECC002.PDF": {
+      "fetched_at": "2026-11-23T17:02:59.624670+00:00",
+      "filename": "rbi__NT30511C215AE336743B58993F87C02ECC002.PDF",
+      "regulator": "RBI",
+      "sha256": "eef47eb6ad64de3cf31079f013bde9aa1bf02695d7c35cad100ff7ec900534ee"
+    },
+    "https://rbidocs.rbi.org.in/rdocs/notification/PDFs/NT3067514ABFAA5774374811512162FA39EB4.PDF": {
+      "fetched_at": "2026-11-23T17:02:58.324493+00:00",
+      "filename": "rbi__NT3067514ABFAA5774374811512162FA39EB4.PDF",
+      "regulator": "RBI",
+      "sha256": "d33d76450391261dd94ef653116203a5aeb80143a2b767e2bd3b3d1fb58e0bf3"
+    },
+    "https://rbidocs.rbi.org.in/rdocs/notification/PDFs/NT307C0BF88BB07734852972E54F8B576AAC7.PDF": {
+      "fetched_at": "2026-11-23T17:02:56.974559+00:00",
+      "filename": "rbi__NT307C0BF88BB07734852972E54F8B576AAC7.PDF",
+      "regulator": "RBI",
+      "sha256": "55510c388b907a8197fb0d4d241129ffb213d109e14cea100de9e9bff58fbe4e"
+    }
+  },
+  "version": 1
 }
